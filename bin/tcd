@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# $1 é o primeiro argumento passado para o script
+arquivo="$1"
+
+# Validação: Se não digitou nada OU o arquivo não existe
+if [ -z "$arquivo" ] || [ ! -f "$arquivo" ]; then
+    echo "❌ Erro: Arquivo inválido ou não encontrado."
+    exit 1  # Note que mudei de 'return' para 'exit' pois agora é um script
+fi
+
+# Extrai a extensão
+ext="${arquivo##*.}"
+
+echo "========================================="
+echo "🚀 Executando: $arquivo"
+echo "========================================="
+
+case "$ext" in
+    c)
+        # Compila e roda
+        gcc -Wall -Wextra -std=c11 "$arquivo" -o .temp_run && \
+        (
+            echo -e "✅ Compilado.\n--- Saída ---"
+            ./.temp_run
+        )
+        # Limpa o binário temporário
+        rm -f .temp_run
+        ;;
+        
+    py)
+        echo -e "🐍 Python\n--- Saída ---"
+        python3 "$arquivo"
+        ;;
+        
+    sh)
+        if bash -n "$arquivo"; then
+            echo -e "🐚 Bash\n--- Saída ---"
+            bash "$arquivo"
+        else
+            echo "❌ Erro de sintaxe no script."
+        fi
+        ;;
+
+    *)
+        echo "⚠️ A extensão '.$ext' ainda não foi configurada."
+        ;;
+esac
+
+echo -e "\n========================================="
