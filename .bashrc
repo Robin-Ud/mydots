@@ -80,6 +80,9 @@ verificar_uptime() {
 # 4. EXECUÇÃO AO INICIAR (Interactive Shell Only)
 # ===========================================================
 
+# starship
+eval "$(starship init bash)"
+
 # Executa apenas se for um terminal interativo
 if [[ $- == *i* ]]; then
     # 1. Verifica se precisa reiniciar
