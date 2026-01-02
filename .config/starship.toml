@@ -1,0 +1,15 @@
+# Configura a seta principal (Onde você digita)
+
+[character]
+# Aqui você coloca o símbolo que quiser dentro das aspas
+success_symbol = "[:](bold green)"
+error_symbol = "[:](bold red)"
+
+# Configura as setinhas do Git (Status)
+[git_status]
+# Troque a cor geral dos ícones do git
+style = "bold blue"
+# Se quiser mudar os ícones também:
+ahead = "↑"
+behind = "↓"
+up_to_date = "✓"
