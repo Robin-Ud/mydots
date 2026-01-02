@@ -43,25 +43,21 @@ require("lazy").setup({
         "folke/tokyonight.nvim",
         lazy = false,
         priority = 1000,
-        config = function()
+        opts = {
+            style = "night", -- Força o fundo mais escuro possível
+            light_style = "day",
+            transparent = false, -- Garante fundo sólido (sem transparência)
+            styles = {
+                sidebars = "dark", -- Deixa a barra lateral escura
+                floats = "dark",   -- Deixa janelas flutuantes escuras
+            },
+        },
+        config = function(_, opts)
+            require("tokyonight").setup(opts)
             vim.cmd([[colorscheme tokyonight]])
         end
     },
-
-    {
-        'nvim-lualine/lualine.nvim',
-        dependencies = { 'nvim-tree/nvim-web-devicons' },
-        config = function()
-            require('lualine').setup({
-                options = {
-                    theme = 'tokyonight',
-                    section_separators = { left = '', right = '' },
-                    component_separators = { left = '|', right = '|' },
-                }
-            })
-        end
-    },
-})
+}) -- <--- CORREÇÃO AQUI: Fechou a tabela } e a função )
 
 -- ========================================================================== --
 -- 4. CONFIGURAÇÃO DOS LSPS (C e Python)
@@ -92,4 +88,4 @@ vim.api.nvim_create_autocmd('LspAttach', {
         vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
         vim.keymap.set('n', '<leader>f', function() vim.lsp.buf.format { async = true } end, opts)
     end,
-})
+}) -- <--- CORREÇÃO AQUI: Fechou a tabela } e a função )
