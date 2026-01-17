@@ -76,6 +76,10 @@ verificar_uptime() {
     fi
 }
 
+
+
+export PATH="$HOME/.local/bin:$PATH"
+
 # ===========================================================
 # 4. EXECUÇÃO AO INICIAR (Interactive Shell Only)
 # ===========================================================
