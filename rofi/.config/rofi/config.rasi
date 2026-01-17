@@ -1,0 +1,103 @@
+/* ~/.config/rofi/config.rasi */
+
+configuration {
+    modi: "drun,run";
+    show-icons: true;
+    display-drun: "🚀 Apps";
+    display-run: "💻 Run";
+    /* Se tiver instalada a fonte "JetBrainsMono NF", use ela. Senão, vai de monospace */
+    font: "JetBrainsMono NF 12";
+}
+
+/* --- TEMA TOKYO NIGHT --- */
+* {
+    /* Paleta Tokyo Night */
+    bg: #1a1b26;
+    bg-alt: #24283b;
+    fg: #c0caf5;
+    blue: #7aa2f7;
+    red: #f7768e;
+    
+    background-color: @bg;
+    text-color: @fg;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    spacing: 0;
+}
+
+window {
+    width: 45%;
+    border: 2px;
+    border-color: @blue;
+    border-radius: 10px;
+}
+
+mainbox {
+    children: [inputbar, listview];
+}
+
+inputbar {
+    background-color: @bg-alt;
+    padding: 12px;
+    children: [prompt, entry];
+}
+
+prompt {
+    background-color: @blue;
+    text-color: @bg;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin: 0 10px 0 0;
+}
+
+entry {
+    background-color: transparent;
+    text-color: @fg;
+    placeholder: "Pesquisar...";
+    vertical-align: 0.5;
+}
+
+/* --- COLE ISTO DO 'listview' PARA BAIXO --- */
+
+listview {
+    lines: 10;
+    padding: 10px;
+    background-color: @bg; /* Garante o fundo azul escuro na área da lista */
+}
+
+/* Configuração base do elemento */
+element {
+    padding: 8px;
+    border-radius: 6px;
+    margin: 2px 0; /* Um pequeno respiro entre as linhas */
+}
+
+/* --- ESTADOS EXPLÍCITOS (Para matar o amarelo) --- */
+
+/* Estado Normal e Alternado (Quando NÃO está selecionado) */
+element normal.normal, element alternate.normal {
+    background-color: transparent; /* Usa o fundo do listview (@bg) */
+    text-color: @fg;               /* Texto claro (#c0caf5) */
+}
+
+/* Estado Selecionado (Onde o cursor está) */
+element selected.normal {
+    background-color: @blue; /* Fundo azul destaque */
+    text-color: @bg;         /* Texto escuro para contraste */
+}
+
+/* --- Ícones e Texto --- */
+/* Garante que eles herdem as cores definidas acima e não inventem moda */
+element-icon {
+    size: 24px;
+    margin: 0 10px 0 0;
+    background-color: transparent;
+}
+
+element-text {
+    vertical-align: 0.5;
+    background-color: transparent;
+    text-color: inherit; /* Pega a cor do 'element' pai */
+    highlight: bold underline; /* Destaca as letras que você digitou */
+}
