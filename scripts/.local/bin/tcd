@@ -1,31 +1,37 @@
 #!/bin/bash
 
-# $1 é o primeiro argumento passado para o script
+# 1. Pega o nome do arquivo
 arquivo="$1"
 
-# Validação: Se não digitou nada OU o arquivo não existe
+# 2. Validação: Se não digitou nada OU o arquivo não existe
 if [ -z "$arquivo" ] || [ ! -f "$arquivo" ]; then
     echo "❌ Erro: Arquivo inválido ou não encontrado."
-    exit 1  # Note que mudei de 'return' para 'exit' pois agora é um script
+    exit 1
 fi
 
-# Extrai a extensão
+# 3. Extrai a extensão (ex: c, py, sh)
 ext="${arquivo##*.}"
 
 echo "========================================="
 echo "🚀 Executando: $arquivo"
 echo "========================================="
 
+# 4. O Seletor de Linguagens
 case "$ext" in
     c)
-        # Compila e roda
-        gcc -Wall -Wextra -std=c11 "$arquivo" -o .temp_run && \
-        (
-            echo -e "✅ Compilado.\n--- Saída ---"
+        # Compilação C
+        # -o define o nome do binário temporário (.temp_run)
+        gcc -Wall -Wextra "$arquivo" -o .temp_run
+        
+        # Verifica se o GCC deu erro (exit code diferente de 0)
+        if [ $? -eq 0 ]; then
+            echo -e "✅ Compilado com sucesso.\n--- Saída ---"
             ./.temp_run
-        )
-        # Limpa o binário temporário
-        rm -f .temp_run
+            # Limpa a sujeira depois de rodar
+            rm -f .temp_run
+        else
+            echo "❌ Falha na compilação. Corrija os erros acima."
+        fi
         ;;
         
     py)
@@ -34,16 +40,12 @@ case "$ext" in
         ;;
         
     sh)
-        if bash -n "$arquivo"; then
-            echo -e "🐚 Bash\n--- Saída ---"
-            bash "$arquivo"
-        else
-            echo "❌ Erro de sintaxe no script."
-        fi
+        echo -e "🐚 Bash\n--- Saída ---"
+        bash "$arquivo"
         ;;
 
     *)
-        echo "⚠️ A extensão '.$ext' ainda não foi configurada."
+        echo "⚠️ A extensão '.$ext' não é suportada por este script."
         ;;
 esac
 
