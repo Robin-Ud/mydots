@@ -3,9 +3,11 @@ set $mod Mod4
 set $term foot
 set $browser firefox
 set $files thunar
-# Menu Rofi (com ícones)
+set $obsidian_id md.obsidian.Obsidian
 set $menu rofi -show drun -show-incons
 
+### 1.2 variaveis executaveis
+set $obsidian_cmd flatpak run $obsidian_id
 ### 2. Input e Output ###
 # Teclado (Layout BR Thinkpad)
 input * {
@@ -20,6 +22,7 @@ bindsym $mod+Return exec $term
 bindsym $mod+d exec $menu
 bindsym $mod+n exec $browser
 bindsym $mod+e exec $files
+bindsym $mod+o exec $obsidian_cmd 
 
 ### 4. Gerenciamento de Janelas ###
 bindsym $mod+q kill
@@ -85,6 +88,11 @@ bindsym $mod+Shift+7 move container to workspace number 7
 bindsym $mod+Shift+8 move container to workspace number 8
 bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
+
+
+### regritas
+### for_window [class="obsidian"] move to workspace number 9
+
 
 ### 6. Modo Resize (Ajustar tamanho) ###
 mode "resize" {
