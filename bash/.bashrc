@@ -91,3 +91,4 @@ verificar_uptime() {
 eval "$(starship init bash)"
 
 # Executa apenas se for um terminal interativo
+alias hq='(cd ~/Imagens/hqs && find . -name \"*.pdf\" | sed \"s|^\./||\" | fzf --layout=reverse --border --info=inline | xargs -r -d \"\\n\" zathura)'

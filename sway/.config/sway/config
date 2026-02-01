@@ -1,35 +1,51 @@
+# ==============================================================================
+#  SWAY CONFIG - FINAL (Tiling Only + Obsidian Regex)
+# ==============================================================================
+
 ### 1. Variáveis ###
 set $mod Mod4
 set $term foot
 set $browser firefox
 set $files thunar
-set $obsidian_id md.obsidian.Obsidian
-set $menu rofi -show drun -show-incons
+set $menu rofi -show drun -show-icons
 
-### 1.2 variaveis executaveis
-set $obsidian_cmd flatpak run $obsidian_id
-### 2. Input e Output ###
-# Teclado (Layout BR Thinkpad)
+# Comando do Obsidian (Flatpak)
+set $obsidian_cmd flatpak run md.obsidian.Obsidian
+
+### 2. Input (ThinkPad) ###
+# Variante thinkpad mantida para barra (/) e interrogação (?) funcionarem
 input * {
-    xkb_layout "br(thinkpad)"
+    xkb_layout "br"
+    xkb_variant "thinkpad"
 }
 
-# Wallpaper Padrão (ajuste o caminho se quiser mudar depois)
 output * bg /usr/share/backgrounds/default.jxl fill
 
-### 3. Atalhos de Aplicativos ###
+### 3. Inicialização ###
+
+# exec swayidle -w \
+#      timeout 300 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
+#      timeout 900 'systemctl suspend' \
+#      before-sleep 'swaylock -f -c 000000'
+
+exec foot -e att_diaria.sh
+include '$(/usr/libexec/sway/layered-include "/usr/share/sway/config.d/*.conf" "/etc/sway/config.d/*.conf" "${XDG_CONFIG_HOME:-$HOME/.config}/sway/config.d/*.conf")'
+
+### 4. Aplicações ###
 bindsym $mod+Return exec $term
+bindsym $mod+Shift+Return exec $files  
+# ^ Mudei o Thunar para Shift+Enter para liberar o 'e'
 bindsym $mod+d exec $menu
 bindsym $mod+n exec $browser
-bindsym $mod+e exec $files
-bindsym $mod+o exec $obsidian_cmd 
-
-### 4. Gerenciamento de Janelas ###
+bindsym $mod+o exec $obsidian_cmd
+bindsym $mod+g exec QT_QPA_PLATFORM=xcb qgis
+ 
+### 5. Sistema ###
 bindsym $mod+q kill
 bindsym $mod+Shift+c reload
-bindsym $mod+Shift+e exec swaynag -t warning -m 'Sair do Sway?' -B 'Sim, sair' 'swaymsg exit'
+bindsym $mod+Shift+e exec swaynag -t warning -m 'Sair?' -B 'Sim' 'swaymsg exit'
 
-# Foco (Vim keys + Setas)
+# Foco (Vim)
 bindsym $mod+h focus left
 bindsym $mod+j focus down
 bindsym $mod+k focus up
@@ -49,24 +65,40 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
-# Layouts
+### 6. Layout (Tiling Puro) ###
+
+# Super + E: Alterna entre dividir Horizontal/Vertical (Padrão i3)
+bindsym $mod+e layout toggle split
+
+# Forçar divisões específicas
 bindsym $mod+b splith
 bindsym $mod+v splitv
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
-bindsym $mod+x layout toggle split
+
+# Desativados para evitar acidentes (já que você não usa):
+# bindsym $mod+s layout stacking
+# bindsym $mod+w layout tabbed
+
 bindsym $mod+f fullscreen
 
-# Flutuante
+# Flutuante (Tirar do Tiling / Tirar do Scratchpad)
 bindsym $mod+Shift+space floating toggle
 bindsym $mod+space focus mode_toggle
 floating_modifier $mod normal
 
-# Scratchpad (Minimizar temporário)
-bindsym $mod+Shift+minus move scratchpad
-bindsym $mod+minus scratchpad show
+### 7. Scratchpad (Obsidian via Regex) ###
 
-### 5. Workspaces ###
+# Regra UNIVERSAL: Pega por app_id OU class (cobre Wayland e XWayland)
+# (?i) significa "case insensitive" (ignora maiúsculas/minúsculas)
+for_window [class="obsidian"] floating enable, resize set 85ppt 85ppt, move scratchpad, border pixel 2
+
+# Atalho: Mostra/Esconde o Obsidian
+bindsym $mod+minus [class="obsidian"] scratchpad show
+
+# Atalhos Genéricos
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+Shift+s scratchpad show
+
+### 8. Workspaces ###
 bindsym $mod+1 workspace number 1
 bindsym $mod+2 workspace number 2
 bindsym $mod+3 workspace number 3
@@ -89,38 +121,13 @@ bindsym $mod+Shift+8 move container to workspace number 8
 bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
-
-### regritas
-### for_window [class="obsidian"] move to workspace number 9
-
-
-### 6. Modo Resize (Ajustar tamanho) ###
+### 9. Resize ###
 mode "resize" {
     bindsym h resize shrink width 10px
     bindsym j resize grow height 10px
     bindsym k resize shrink height 10px
     bindsym l resize grow width 10px
-
-    bindsym Left resize shrink width 10px
-    bindsym Down resize grow height 10px
-    bindsym Up resize shrink height 10px
-    bindsym Right resize grow width 10px
-
     bindsym Return mode "default"
     bindsym Escape mode "default"
 }
 bindsym $mod+r mode "resize"
-
-### 7. Inicialização e Sistema ###
-# Idle / Bloqueio de tela
-exec swayidle -w \
-     timeout 300 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
-     timeout 900 'systemctl suspend' \
-     before-sleep 'swaylock -f -c 000000'
-
-# Script de atualização diária (abre no terminal foot)
-exec foot -e att_diaria.sh
-
-### 8. Includes do Sistema (Fedora/Defaults) ###
-# Mantém a barra e configurações do sistema funcionando
-include '$(/usr/libexec/sway/layered-include "/usr/share/sway/config.d/*.conf" "/etc/sway/config.d/*.conf" "${XDG_CONFIG_HOME:-$HOME/.config}/sway/config.d/*.conf")'
