@@ -1,0 +1,263 @@
+[1mdiff --git a/bash/.bashrc b/bash/.bashrc[m
+[1mindex a509bb2..04b33f0 100644[m
+[1m--- a/bash/.bashrc[m
+[1m+++ b/bash/.bashrc[m
+[36m@@ -91,3 +91,4 @@[m [mverificar_uptime() {[m
+ eval "$(starship init bash)"[m
+ [m
+ # Executa apenas se for um terminal interativo[m
+[32m+[m[32malias hq='(cd ~/Imagens/hqs && find . -name \"*.pdf\" | sed \"s|^\./||\" | fzf --layout=reverse --border --info=inline | xargs -r -d \"\\n\" zathura)'[m
+[1mdiff --git a/foot/.config/foot/foot.ini b/foot/.config/foot/foot.ini[m
+[1mindex e79546c..079217d 100644[m
+[1m--- a/foot/.config/foot/foot.ini[m
+[1m+++ b/foot/.config/foot/foot.ini[m
+[36m@@ -3,7 +3,7 @@[m
+ [main][m
+ # Fonte: Use "JetBrainsMono NF" ou "FiraCode NF" se tiver instalado para os ícones.[m
+ # Se não, "monospace" usa a padrão do sistema.[m
+[31m-font=monospace:size=10[m
+[32m+[m[32mfont=monospace:size=8[m
+ # Melhora a renderização da fonte[m
+ dpi-aware=yes[m
+ [m
+[1mdiff --git a/nvim/.config/nvim/init.lua b/nvim/.config/nvim/init.lua[m
+[1mindex b16ca06..2360192 100644[m
+[1m--- a/nvim/.config/nvim/init.lua[m
+[1m+++ b/nvim/.config/nvim/init.lua[m
+[36m@@ -17,8 +17,8 @@[m [mvim.opt.swapfile = false          -- Sem arquivos de swap sujando pastas[m
+ vim.keymap.set('n', 'ç', 'm`o<Esc>``', { noremap = true, silent = true })[m
+ vim.keymap.set('n', 'Ç', 'm`O<Esc>``', { noremap = true, silent = true })[m
+ [m
+[31m--- Mapeia F5 para salvar (:w) e rodar o tcd no arquivo atual[m
+[31m-vim.keymap.set('n', '<F5>', ':w <bar> !tcd %<CR>', { noremap = true, silent = false })[m
+[32m+[m[32m-- [MUDANÇA AQUI] Leader + t (Espaço depois t) para salvar e rodar o tcd[m
+[32m+[m[32mvim.keymap.set('n', '<leader>t', ':w <bar> !tcd %<CR>', { noremap = true, silent = false, desc = "Rodar TCD" })[m
+ [m
+ -- Atalho para salvar com Espaço + w[m
+ vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = 'Salvar' })[m
+[36m@@ -44,12 +44,12 @@[m [mrequire("lazy").setup({[m
+         lazy = false,[m
+         priority = 1000,[m
+         opts = {[m
+[31m-            style = "night", -- Força o fundo mais escuro possível[m
+[32m+[m[32m            style = "night",[m
+             light_style = "day",[m
+[31m-            transparent = false, -- Garante fundo sólido (sem transparência)[m
+[32m+[m[32m            transparent = false,[m
+             styles = {[m
+[31m-                sidebars = "dark", -- Deixa a barra lateral escura[m
+[31m-                floats = "dark",   -- Deixa janelas flutuantes escuras[m
+[32m+[m[32m                sidebars = "dark",[m
+[32m+[m[32m                floats = "dark",[m
+             },[m
+         },[m
+         config = function(_, opts)[m
+[36m@@ -57,7 +57,7 @@[m [mrequire("lazy").setup({[m
+             vim.cmd([[colorscheme tokyonight]])[m
+         end[m
+     },[m
+[31m-}) -- <--- CORREÇÃO AQUI: Fechou a tabela } e a função )[m
+[32m+[m[32m})[m
+ [m
+ -- ========================================================================== --[m
+ -- 4. CONFIGURAÇÃO DOS LSPS (C e Python)[m
+[36m@@ -73,19 +73,35 @@[m [mrequire("mason-lspconfig").setup({[m
+ })[m
+ [m
+ -- ========================================================================== --[m
+[31m--- 5. AJUSTES FINAIS (Indentação e Atalhos)[m
+[32m+[m[32m-- 5. AJUSTES FINAIS E ATALHOS DO LSP[m
+ -- ========================================================================== --[m
+ -- TRAVA DE SEGURANÇA DA INDENTAÇÃO[m
+ vim.opt.smartindent = false[m
+ vim.opt.cindent = false[m
+ vim.opt.indentexpr = "" [m
+ [m
+[31m--- Atalhos do LSP (Só funcionam quando o servidor conectar)[m
+[32m+[m[32m-- Configuração quando o LSP (Intelisense) conecta no arquivo[m
+ vim.api.nvim_create_autocmd('LspAttach', {[m
+     callback = function(ev)[m
+         local opts = { buffer = ev.buf }[m
+[32m+[m[41m        [m
+[32m+[m[32m        -- Ir para definição (gd) e ver documentação (K)[m
+         vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)[m
+         vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)[m
+[31m-        vim.keymap.set('n', '<leader>f', function() vim.lsp.buf.format { async = true } end, opts)[m
+[32m+[m
+[32m+[m[32m        -- [MUDANÇA AQUI] Leader + f (Espaço depois f) para Formatar[m
+[32m+[m[32m        vim.keymap.set('n', '<leader>f', function()[m[41m [m
+[32m+[m[32m            vim.lsp.buf.format { async = true }[m[41m [m
+[32m+[m[32m        end, opts)[m
+[32m+[m[32m    end,[m
+[32m+[m[32m})[m
+[32m+[m
+[32m+[m[32m-- ========================================================================== --[m
+[32m+[m[32m-- 6. FORMATAÇÃO AUTOMÁTICA AO SALVAR[m
+[32m+[m[32m-- ========================================================================== --[m
+[32m+[m[32m-- Mantive ativo: sempre que salvar, ele formata sozinho.[m
+[32m+[m[32mvim.api.nvim_create_autocmd("BufWritePre", {[m
+[32m+[m[32m    callback = function()[m
+[32m+[m[32m        vim.lsp.buf.format({ async = false })[m
+     end,[m
+[31m-}) -- <--- CORREÇÃO AQUI: Fechou a tabela } e a função )[m
+[32m+[m[32m})[m
+[1mdiff --git a/sway/.config/sway/config b/sway/.config/sway/config[m
+[1mindex bd0776a..5c56bfe 100644[m
+[1m--- a/sway/.config/sway/config[m
+[1m+++ b/sway/.config/sway/config[m
+[36m@@ -1,35 +1,51 @@[m
+[32m+[m[32m# ==============================================================================[m
+[32m+[m[32m#  SWAY CONFIG - FINAL (Tiling Only + Obsidian Regex)[m
+[32m+[m[32m# ==============================================================================[m
+[32m+[m
+ ### 1. Variáveis ###[m
+ set $mod Mod4[m
+ set $term foot[m
+ set $browser firefox[m
+ set $files thunar[m
+[31m-set $obsidian_id md.obsidian.Obsidian[m
+[31m-set $menu rofi -show drun -show-incons[m
+[32m+[m[32mset $menu rofi -show drun -show-icons[m
+[32m+[m
+[32m+[m[32m# Comando do Obsidian (Flatpak)[m
+[32m+[m[32mset $obsidian_cmd flatpak run md.obsidian.Obsidian[m
+ [m
+[31m-### 1.2 variaveis executaveis[m
+[31m-set $obsidian_cmd flatpak run $obsidian_id[m
+[31m-### 2. Input e Output ###[m
+[31m-# Teclado (Layout BR Thinkpad)[m
+[32m+[m[32m### 2. Input (ThinkPad) ###[m
+[32m+[m[32m# Variante thinkpad mantida para barra (/) e interrogação (?) funcionarem[m
+ input * {[m
+[31m-    xkb_layout "br(thinkpad)"[m
+[32m+[m[32m    xkb_layout "br"[m
+[32m+[m[32m    xkb_variant "thinkpad"[m
+ }[m
+ [m
+[31m-# Wallpaper Padrão (ajuste o caminho se quiser mudar depois)[m
+ output * bg /usr/share/backgrounds/default.jxl fill[m
+ [m
+[31m-### 3. Atalhos de Aplicativos ###[m
+[32m+[m[32m### 3. Inicialização ###[m
+[32m+[m
+[32m+[m[32m# exec swayidle -w \[m
+[32m+[m[32m#      timeout 300 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \[m
+[32m+[m[32m#      timeout 900 'systemctl suspend' \[m
+[32m+[m[32m#      before-sleep 'swaylock -f -c 000000'[m
+[32m+[m
+[32m+[m[32mexec foot -e att_diaria.sh[m
+[32m+[m[32minclude '$(/usr/libexec/sway/layered-include "/usr/share/sway/config.d/*.conf" "/etc/sway/config.d/*.conf" "${XDG_CONFIG_HOME:-$HOME/.config}/sway/config.d/*.conf")'[m
+[32m+[m
+[32m+[m[32m### 4. Aplicações ###[m
+ bindsym $mod+Return exec $term[m
+[32m+[m[32mbindsym $mod+Shift+Return exec $files[m[41m  [m
+[32m+[m[32m# ^ Mudei o Thunar para Shift+Enter para liberar o 'e'[m
+ bindsym $mod+d exec $menu[m
+ bindsym $mod+n exec $browser[m
+[31m-bindsym $mod+e exec $files[m
+[31m-bindsym $mod+o exec $obsidian_cmd [m
+[31m-[m
+[31m-### 4. Gerenciamento de Janelas ###[m
+[32m+[m[32mbindsym $mod+o exec $obsidian_cmd[m
+[32m+[m[32mbindsym $mod+g exec QT_QPA_PLATFORM=xcb qgis[m
+[32m+[m[41m [m
+[32m+[m[32m### 5. Sistema ###[m
+ bindsym $mod+q kill[m
+ bindsym $mod+Shift+c reload[m
+[31m-bindsym $mod+Shift+e exec swaynag -t warning -m 'Sair do Sway?' -B 'Sim, sair' 'swaymsg exit'[m
+[32m+[m[32mbindsym $mod+Shift+e exec swaynag -t warning -m 'Sair?' -B 'Sim' 'swaymsg exit'[m
+ [m
+[31m-# Foco (Vim keys + Setas)[m
+[32m+[m[32m# Foco (Vim)[m
+ bindsym $mod+h focus left[m
+ bindsym $mod+j focus down[m
+ bindsym $mod+k focus up[m
+[36m@@ -49,24 +65,40 @@[m [mbindsym $mod+Shift+Down move down[m
+ bindsym $mod+Shift+Up move up[m
+ bindsym $mod+Shift+Right move right[m
+ [m
+[31m-# Layouts[m
+[32m+[m[32m### 6. Layout (Tiling Puro) ###[m
+[32m+[m
+[32m+[m[32m# Super + E: Alterna entre dividir Horizontal/Vertical (Padrão i3)[m
+[32m+[m[32mbindsym $mod+e layout toggle split[m
+[32m+[m
+[32m+[m[32m# Forçar divisões específicas[m
+ bindsym $mod+b splith[m
+ bindsym $mod+v splitv[m
+[31m-bindsym $mod+s layout stacking[m
+[31m-bindsym $mod+w layout tabbed[m
+[31m-bindsym $mod+x layout toggle split[m
+[32m+[m
+[32m+[m[32m# Desativados para evitar acidentes (já que você não usa):[m
+[32m+[m[32m# bindsym $mod+s layout stacking[m
+[32m+[m[32m# bindsym $mod+w layout tabbed[m
+[32m+[m
+ bindsym $mod+f fullscreen[m
+ [m
+[31m-# Flutuante[m
+[32m+[m[32m# Flutuante (Tirar do Tiling / Tirar do Scratchpad)[m
+ bindsym $mod+Shift+space floating toggle[m
+ bindsym $mod+space focus mode_toggle[m
+ floating_modifier $mod normal[m
+ [m
+[31m-# Scratchpad (Minimizar temporário)[m
+[32m+[m[32m### 7. Scratchpad (Obsidian via Regex) ###[m
+[32m+[m
+[32m+[m[32m# Regra UNIVERSAL: Pega por app_id OU class (cobre Wayland e XWayland)[m
+[32m+[m[32m# (?i) significa "case insensitive" (ignora maiúsculas/minúsculas)[m
+[32m+[m[32mfor_window [class="obsidian"] floating enable, resize set 85ppt 85ppt, move scratchpad, border pixel 2[m
+[32m+[m
+[32m+[m[32m# Atalho: Mostra/Esconde o Obsidian[m
+[32m+[m[32mbindsym $mod+minus [class="obsidian"] scratchpad show[m
+[32m+[m
+[32m+[m[32m# Atalhos Genéricos[m
+ bindsym $mod+Shift+minus move scratchpad[m
+[31m-bindsym $mod+minus scratchpad show[m
+[32m+[m[32mbindsym $mod+Shift+s scratchpad show[m
+ [m
+[31m-### 5. Workspaces ###[m
+[32m+[m[32m### 8. Workspaces ###[m
+ bindsym $mod+1 workspace number 1[m
+ bindsym $mod+2 workspace number 2[m
+ bindsym $mod+3 workspace number 3[m
+[36m@@ -89,38 +121,13 @@[m [mbindsym $mod+Shift+8 move container to workspace number 8[m
+ bindsym $mod+Shift+9 move container to workspace number 9[m
+ bindsym $mod+Shift+0 move container to workspace number 10[m
+ [m
+[31m-[m
+[31m-### regritas[m
+[31m-### for_window [class="obsidian"] move to workspace number 9[m
+[31m-[m
+[31m-[m
+[31m-### 6. Modo Resize (Ajustar tamanho) ###[m
+[32m+[m[32m### 9. Resize ###[m
+ mode "resize" {[m
+     bindsym h resize shrink width 10px[m
+     bindsym j resize grow height 10px[m
+     bindsym k resize shrink height 10px[m
+     bindsym l resize grow width 10px[m
+[31m-[m
+[31m-    bindsym Left resize shrink width 10px[m
+[31m-    bindsym Down resize grow height 10px[m
+[31m-    bindsym Up resize shrink height 10px[m
+[31m-    bindsym Right resize grow width 10px[m
+[31m-[m
+     bindsym Return mode "default"[m
+     bindsym Escape mode "default"[m
+ }[m
+ bindsym $mod+r mode "resize"[m
+[31m-[m
+[31m-### 7. Inicialização e Sistema ###[m
+[31m-# Idle / Bloqueio de tela[m
+[31m-exec swayidle -w \[m
+[31m-     timeout 300 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \[m
+[31m-     timeout 900 'systemctl suspend' \[m
+[31m-     before-sleep 'swaylock -f -c 000000'[m
+[31m-[m
+[31m-# Script de atualização diária (abre no terminal foot)[m
+[31m-exec foot -e att_diaria.sh[m
+[31m-[m
+[31m-### 8. Includes do Sistema (Fedora/Defaults) ###[m
+[31m-# Mantém a barra e configurações do sistema funcionando[m
+[31m-include '$(/usr/libexec/sway/layered-include "/usr/share/sway/config.d/*.conf" "/etc/sway/config.d/*.conf" "${XDG_CONFIG_HOME:-$HOME/.config}/sway/config.d/*.conf")'[m
