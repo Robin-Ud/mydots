@@ -1,26 +1,21 @@
 -- ========================================================================== --
 -- 1. CONFIGURAÇÕES BÁSICAS (Vim Options)
 -- ========================================================================== --
-vim.opt.number = true             -- Números das linhas
-vim.opt.relativenumber = true     -- Números relativos
-vim.opt.clipboard = "unnamedplus" -- Copiar/Colar do sistema
-vim.opt.tabstop = 4               -- Tab com 4 espaços
+vim.opt.number = true
+vim.opt.relativenumber = true
+vim.opt.clipboard = "unnamedplus"
+vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.expandtab = true
-vim.g.mapleader = " "             -- Define o Espaço como tecla Líder
-vim.opt.swapfile = false          -- Sem arquivos de swap sujando pastas
+vim.g.mapleader = " "
+vim.opt.swapfile = false
 
 -- ========================================================================== --
 -- 2. SEUS ATALHOS CUSTOMIZADOS (Keymaps)
 -- ========================================================================== --
--- O famoso atalho do ç
 vim.keymap.set('n', 'ç', 'm`o<Esc>``', { noremap = true, silent = true })
 vim.keymap.set('n', 'Ç', 'm`O<Esc>``', { noremap = true, silent = true })
-
--- [MUDANÇA AQUI] Leader + t (Espaço depois t) para salvar e rodar o tcd
 vim.keymap.set('n', '<leader>t', ':w <bar> !tcd %<CR>', { noremap = true, silent = false, desc = "Rodar TCD" })
-
--- Atalho para salvar com Espaço + w
 vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = 'Salvar' })
 
 -- ========================================================================== --
@@ -34,23 +29,76 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
     -- >> Ferramentas de Código (LSP)
-    "neovim/nvim-lspconfig",             -- Essencial para o LSP
-    "williamboman/mason.nvim",           -- Instalador de LSPs
-    "williamboman/mason-lspconfig.nvim", -- Ponte entre Mason e lspconfig
+    "neovim/nvim-lspconfig",
+    "williamboman/mason.nvim",
+    "williamboman/mason-lspconfig.nvim",
 
-    -- >> Visual (Tema e Barra)
+    -- --> NOVO: O "Cérebro" do Rust (Rustaceanvim)
+    {
+        'mrcjkb/rustaceanvim',
+        version = '^5', -- Recomendado fixar na versão 5
+        lazy = false,   -- Carrega assim que inicia (importante para detecção de arquivo)
+    },
+
+    -- --> NOVO: Syntax Highlighting Melhorado (Treesitter)
+    {
+        "nvim-treesitter/nvim-treesitter",
+        build = ":TSUpdate",
+        config = function()
+            require("nvim-treesitter.configs").setup({
+                -- Garante que instale highlight para essas linguagens
+                ensure_installed = { "c", "lua", "vim", "vimdoc", "rust", "python" },
+                highlight = { enable = true },
+            })
+        end
+    },
+
+    -- --> NOVO: Autocomplete (O motor que faz a janelinha aparecer)
+    {
+        "hrsh7th/nvim-cmp",
+        dependencies = {
+            "hrsh7th/cmp-nvim-lsp", -- Sugestões do LSP
+            "hrsh7th/cmp-buffer",   -- Sugestões de palavras no arquivo
+            "hrsh7th/cmp-path",     -- Sugestões de caminhos de arquivo
+            "L3MON4D3/LuaSnip",     -- Motor de Snippets (Obrigatório pro CMP)
+            "saadparwaiz1/cmp_luasnip",
+        },
+        config = function()
+            local cmp = require("cmp")
+            cmp.setup({
+                snippet = {
+                    expand = function(args)
+                        require('luasnip').lsp_expand(args.body)
+                    end,
+                },
+                mapping = cmp.mapping.preset.insert({
+                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+                    ['<C-Space>'] = cmp.mapping.complete(),
+                    ['<C-e>'] = cmp.mapping.abort(),
+                    ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Enter confirma
+                    ['<Tab>'] = cmp.mapping.select_next_item(),        -- Tab navega pra baixo
+                    ['<S-Tab>'] = cmp.mapping.select_prev_item(),      -- Shift+Tab navega pra cima
+                }),
+                sources = cmp.config.sources({
+                    { name = 'nvim_lsp' }, -- Prioridade: LSP
+                    { name = 'luasnip' },  -- Prioridade: Snippets
+                }, {
+                    { name = 'buffer' },   -- Prioridade: Texto do buffer
+                })
+            })
+        end
+    },
+
+    -- >> Visual (Tema)
     {
         "folke/tokyonight.nvim",
         lazy = false,
         priority = 1000,
         opts = {
             style = "night",
-            light_style = "day",
             transparent = false,
-            styles = {
-                sidebars = "dark",
-                floats = "dark",
-            },
+            styles = { sidebars = "dark", floats = "dark" },
         },
         config = function(_, opts)
             require("tokyonight").setup(opts)
@@ -60,14 +108,20 @@ require("lazy").setup({
 })
 
 -- ========================================================================== --
--- 4. CONFIGURAÇÃO DOS LSPS (C e Python)
+-- 4. CONFIGURAÇÃO DOS LSPS
 -- ========================================================================== --
 require("mason").setup()
 require("mason-lspconfig").setup({
-    ensure_installed = { "clangd", "pyright" },
+    -- IMPORTANTE: Não coloque "rust_analyzer" aqui. 
+    -- O plugin rustaceanvim cuida disso sozinho.
+    ensure_installed = { "clangd", "pyright" }, 
     handlers = {
         function(server_name)
-            require('lspconfig')[server_name].setup({})
+            -- Conecta o autocompletar (cmp) aos servidores LSP
+            local capabilities = require('cmp_nvim_lsp').default_capabilities()
+            require('lspconfig')[server_name].setup({
+                capabilities = capabilities
+            })
         end,
     },
 })
@@ -75,21 +129,19 @@ require("mason-lspconfig").setup({
 -- ========================================================================== --
 -- 5. AJUSTES FINAIS E ATALHOS DO LSP
 -- ========================================================================== --
--- TRAVA DE SEGURANÇA DA INDENTAÇÃO
 vim.opt.smartindent = false
 vim.opt.cindent = false
 vim.opt.indentexpr = "" 
 
--- Configuração quando o LSP (Intelisense) conecta no arquivo
 vim.api.nvim_create_autocmd('LspAttach', {
     callback = function(ev)
         local opts = { buffer = ev.buf }
         
-        -- Ir para definição (gd) e ver documentação (K)
         vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
         vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+        -- --> NOVO: Code Action (útil para Rust corrigir erros sozinho)
+        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
 
-        -- [MUDANÇA AQUI] Leader + f (Espaço depois f) para Formatar
         vim.keymap.set('n', '<leader>f', function() 
             vim.lsp.buf.format { async = true } 
         end, opts)
@@ -97,9 +149,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
 })
 
 -- ========================================================================== --
--- 6. FORMATAÇÃO AUTOMÁTICA AO SALVAR
+-- 6. FORMATAÇÃO AUTOMÁTICA
 -- ========================================================================== --
--- Mantive ativo: sempre que salvar, ele formata sozinho.
 vim.api.nvim_create_autocmd("BufWritePre", {
     callback = function()
         vim.lsp.buf.format({ async = false })
