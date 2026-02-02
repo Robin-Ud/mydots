@@ -39,7 +39,7 @@ unset rc
 # Sistema
 # Atualiza e salva o log no CACHE para não sujar a home
 alias up='sudo dnf update -y --refresh && echo $(date +%F) > ~/.cache/last_upd && echo "✅ Scripts sincronizados!"'
-
+alias :q='exit'
 # ===========================================================
 # 3. FUNÇÕES
 # ===========================================================
@@ -82,7 +82,26 @@ verificar_uptime() {
         fi
     fi
 }
+hq() {
+    # Pasta das HQs
+    local pasta="$HOME/Imagens/hqs"
 
+    # Verifica se a pasta existe antes de tentar
+    if [ ! -d "$pasta" ]; then
+        echo "Erro: A pasta $pasta não existe!"
+        return 1
+    fi
+
+    # Busca PDF, CBR e CBZ (case insensitive)
+    # Usa subshell () para o 'cd' não mudar você de pasta no terminal
+    local file
+    file=$(cd "$pasta" && find . -type f \( -iname "*.pdf" -o -iname "*.cbr" -o -iname "*.cbz" \) | sed "s|^\./||" | fzf --layout=reverse --border --info=inline --prompt="HQ > ")
+    
+    # Se escolheu algo, abre com o YACReader (caminho completo para não dar erro)
+    if [ -n "$file" ]; then
+        flatpak run com.yacreader.YACReader "$pasta/$file" > /dev/null 2>&1 &
+    fi
+}
 # ===========================================================
 # 4. EXECUÇÃO AO INICIAR (Interactive Shell Only)
 # ===========================================================
@@ -90,5 +109,5 @@ verificar_uptime() {
 # starship
 eval "$(starship init bash)"
 
-# Executa apenas se for um terminal interativo
-alias hq='(cd ~/Imagens/hqs && find . -name \"*.pdf\" | sed \"s|^\./||\" | fzf --layout=reverse --border --info=inline | xargs -r -d \"\\n\" zathura)'
+
+. "$HOME/.cargo/env"

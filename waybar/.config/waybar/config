@@ -35,7 +35,7 @@
         "format-muted": "🔇",
         "format-icons": { "default": ["", "", ""] },
         "on-click": "pavucontrol"
-    }
+    },
     "bluetooth": {
         "format": " {status}",
         "format-disabled": "", // Esconde se estiver desligado
