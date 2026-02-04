@@ -40,20 +40,24 @@ require("lazy").setup({
         lazy = false,   -- Carrega assim que inicia (importante para detecção de arquivo)
     },
 
-    -- --> NOVO: Syntax Highlighting Melhorado (Treesitter)
+-- --> NOVO: Syntax Highlighting Melhorado (Treesitter)
     {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
         config = function()
-            require("nvim-treesitter.configs").setup({
+            -- Tenta carregar o plugin com segurança
+            local status_ok, configs = pcall(require, "nvim-treesitter.configs")
+            if not status_ok then
+                return -- Se der erro, para por aqui e não quebra o Neovim
+            end
+
+            configs.setup({
                 -- Garante que instale highlight para essas linguagens
                 ensure_installed = { "c", "lua", "vim", "vimdoc", "rust", "python" },
                 highlight = { enable = true },
             })
         end
-    },
-
-    -- --> NOVO: Autocomplete (O motor que faz a janelinha aparecer)
+    },    -- --> NOVO: Autocomplete (O motor que faz a janelinha aparecer)
     {
         "hrsh7th/nvim-cmp",
         dependencies = {
@@ -139,12 +143,15 @@ vim.api.nvim_create_autocmd('LspAttach', {
         
         vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
         vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-        -- --> NOVO: Code Action (útil para Rust corrigir erros sozinho)
         vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
-
         vim.keymap.set('n', '<leader>f', function() 
             vim.lsp.buf.format { async = true } 
         end, opts)
+
+        -- --> NOVO: Atalho para ligar/desligar as dicas de tipo (Inlay Hints)
+        vim.keymap.set('n', '<leader>h', function()
+            vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+        end, { desc = "Toggle Inlay Hints" })
     end,
 })
 
