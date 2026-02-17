@@ -18,6 +18,13 @@ vim.keymap.set('n', 'Ç', 'm`O<Esc>``', { noremap = true, silent = true })
 vim.keymap.set('n', '<leader>t', ':w <bar> !tcd %<CR>', { noremap = true, silent = false, desc = "Rodar TCD" })
 vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = 'Salvar' })
 
+-- Mostra o erro em um popup quando o cursor para (CursorHold)
+vim.api.nvim_create_autocmd("CursorHold", {
+  callback = function()
+    vim.diagnostic.open_float(nil, { focusable = false })
+  end,
+})
+
 -- ========================================================================== --
 -- 3. GERENCIADOR DE PLUGINS (Lazy.nvim)
 -- ========================================================================== --
@@ -111,26 +118,32 @@ require("lazy").setup({
     },
 })
 
+
 -- ========================================================================== --
 -- 4. CONFIGURAÇÃO DOS LSPS
 -- ========================================================================== --
 require("mason").setup()
 require("mason-lspconfig").setup({
-    -- IMPORTANTE: Não coloque "rust_analyzer" aqui. 
-    -- O plugin rustaceanvim cuida disso sozinho.
-    ensure_installed = { "clangd", "pyright" }, 
+    ensure_installed = { "clangd", "pyright" }, -- Garanta que tem vírgula aqui
     handlers = {
         function(server_name)
-            -- Conecta o autocompletar (cmp) aos servidores LSP
             local capabilities = require('cmp_nvim_lsp').default_capabilities()
-            require('lspconfig')[server_name].setup({
-                capabilities = capabilities
-            })
-        end,
-    },
-})
+            local config = { capabilities = capabilities }
 
--- ========================================================================== --
+            -- Trava para não iniciar o Pyright nos scripts do jogo
+            if server_name == "pyright" then
+                config.on_new_config = function(new_config, new_root_dir)
+                    if new_root_dir and new_root_dir:lower():match("farmer") then
+                        new_config.autostart = false
+                    end
+                end
+            end
+
+            require('lspconfig')[server_name].setup(config)
+        end, -- Fecha a function
+    }, -- Fecha o handlers
+}) 
+-- Fecha o setup-- ========================================================================== --
 -- 5. AJUSTES FINAIS E ATALHOS DO LSP
 -- ========================================================================== --
 vim.opt.smartindent = false

@@ -2,9 +2,14 @@
     "layer": "top",
     "position": "top",
     "height": 30,
+    "spacing": 4,
+    
+    // Módulos carregados em cada posição
     "modules-left": ["hyprland/workspaces", "hyprland/window"],
-    "modules-center": ["clock"],
-    "modules-right": ["pulseaudio", "network", "battery", "tray"],
+    "modules-center": [], 
+    "modules-right": ["idle_inhibitor", "pulseaudio", "network", "battery", "clock", "tray"],
+
+    // --- Configuração dos Módulos ---
 
     "hyprland/workspaces": {
         "format": "{icon}",
@@ -14,35 +19,56 @@
             "urgent": "!", "active": "●", "default": "○"
         }
     },
+
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "",
+            "deactivated": ""
+        },
+        "tooltip": true,
+        "tooltip-format-activated": "Modo Apresentação: ATIVADO (Não vai dormir)",
+        "tooltip-format-deactivated": "Modo Economia: ATIVADO (Vai dormir)"
+    },
+
     "clock": {
         "format": "{:%H:%M  %d/%m}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt>{calendar}</tt>"
     },
+
     "battery": {
         "states": { "warning": 30, "critical": 15 },
         "format": "{icon} {capacity}%",
         "format-charging": "⚡ {capacity}%",
         "format-icons": ["", "", "", "", ""]
     },
+
     "network": {
         "format-wifi": "  {essid}",
         "format-ethernet": " Eth",
         "format-disconnected": "⚠ Off",
         "on-click": "nm-connection-editor"
     },
+
     "pulseaudio": {
         "format": "{icon} {volume}%",
         "format-muted": "🔇",
         "format-icons": { "default": ["", "", ""] },
         "on-click": "pavucontrol"
     },
+
     "bluetooth": {
         "format": " {status}",
-        "format-disabled": "", // Esconde se estiver desligado
+        "format-disabled": "", 
         "format-connected": " {num_connections}",
         "tooltip-format": "{controller_alias}\t{controller_address}",
         "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{device_enumerate}",
         "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
         "on-click": "blueman-manager"
+    },
+    
+    "tray": {
+        "icon-size": 21,
+        "spacing": 10
     }
 }

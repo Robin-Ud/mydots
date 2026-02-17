@@ -46,3 +46,14 @@ window#waybar {
 @keyframes blink {
     to { background-color: #ffffff; color: #000000; }
 }
+
+#idle_inhibitor {
+    padding: 0 10px;
+    color: #cdd6f4; /* cor do texto normal */
+}
+
+#idle_inhibitor.activated {
+    background-color: #f38ba8; /* Fundo vermelho/rosa quando estiver impedindo o sono */
+    color: #11111b;
+    border-radius: 10px;
+}
