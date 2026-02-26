@@ -12,6 +12,7 @@ fi
 # Força o NPM a usar pastas ocultas corretas em vez de sujar a raiz
 export NPM_CONFIG_USERCONFIG="$HOME/.config/npm/npmrc"
 export NPM_CONFIG_CACHE="$HOME/.cache/npm"
+export EDITOR=nvim
 
 # User specific environment
 # Adiciona apenas .local/bin (já que você moveu o bin antigo pra lá)
