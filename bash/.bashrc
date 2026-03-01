@@ -41,6 +41,7 @@ unset rc
 # Atualiza e salva o log no CACHE para não sujar a home
 alias up='sudo dnf update -y --refresh && echo $(date +%F) > ~/.cache/last_upd && echo "✅ Scripts sincronizados!"'
 alias :q='exit'
+alias code='code .'
 # ===========================================================
 # 3. FUNÇÕES
 # ===========================================================
@@ -102,6 +103,14 @@ hq() {
     if [ -n "$file" ]; then
         flatpak run com.yacreader.YACReader "$pasta/$file" > /dev/null 2>&1 &
     fi
+}
+function y() {
+    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+        cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
 }
 # ===========================================================
 # 4. EXECUÇÃO AO INICIAR (Interactive Shell Only)
