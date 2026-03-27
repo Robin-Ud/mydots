@@ -15,7 +15,7 @@ vim.opt.swapfile = false
 -- ========================================================================== --
 vim.keymap.set('n', 'ç', 'm`o<Esc>``', { noremap = true, silent = true })
 vim.keymap.set('n', 'Ç', 'm`O<Esc>``', { noremap = true, silent = true })
-vim.keymap.set('n', '<leader>t', ':w <bar> !tcd %<CR>', { noremap = true, silent = false, desc = "Rodar TCD" })
+vim.keymap.set('n', '<A-m>', ':w <bar> !tcd %<CR>', { noremap = true, silent = false, desc = "Rodar TCD" })
 vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = 'Salvar' })
 
 -- Mostra o erro em um popup quando o cursor para (CursorHold)
