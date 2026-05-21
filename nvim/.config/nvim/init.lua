@@ -28,6 +28,26 @@ vim.api.nvim_create_autocmd("CursorHold", {
 -- ========================================================================== --
 -- 3. GERENCIADOR DE PLUGINS (Lazy.nvim)
 -- ========================================================================== --
+
+-- Deve ser definido ANTES do lazy carregar o rustaceanvim
+vim.g.rustaceanvim = {
+    server = {
+        cmd = function()
+            local ra = vim.fn.exepath("rust-analyzer")
+            if ra == "" then ra = vim.fn.expand("~/.cargo/bin/rust-analyzer") end
+            return { ra }
+        end,
+        capabilities = function()
+            return require("cmp_nvim_lsp").default_capabilities()
+        end,
+        settings = {
+            ["rust-analyzer"] = {
+                check = { command = "clippy" },
+            },
+        },
+    },
+}
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
     vim.fn.system({ "git", "clone", "https://github.com/folke/lazy.nvim.git", "--branch=stable", lazypath })
@@ -127,6 +147,9 @@ require("mason-lspconfig").setup({
     ensure_installed = { "clangd", "pyright" }, -- Garanta que tem vírgula aqui
     handlers = {
         function(server_name)
+            -- rustaceanvim gerencia o rust_analyzer diretamente
+            if server_name == "rust_analyzer" then return end
+
             local capabilities = require('cmp_nvim_lsp').default_capabilities()
             local config = { capabilities = capabilities }
 
