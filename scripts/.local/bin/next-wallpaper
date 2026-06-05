@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Troca para o próximo wallpaper sem reiniciar o Hyprland
+
+WALLPAPER_DIR="$HOME/etc/wallpapers"
+STATE="$HOME/.local/share/hypr-wallpaper-idx"
+
+mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort -V)
+
+total=${#images[@]}
+[[ $total -eq 0 ]] && exit 1
+
+idx=0
+[[ -f "$STATE" ]] && idx=$(<"$STATE")
+old_img="${images[$idx]}"
+
+idx=$(( (idx + 1) % total ))
+echo "$idx" > "$STATE"
+new_img="${images[$idx]}"
+
+hyprctl hyprpaper preload "$new_img"
+
+# Aguarda o preload completar (máx 2s)
+for _ in $(seq 1 20); do
+    hyprctl hyprpaper listloaded 2>/dev/null | grep -qF "$new_img" && break
+    sleep 0.1
+done
+
+hyprctl hyprpaper wallpaper "eDP-1,$new_img"
+[[ "$old_img" != "$new_img" ]] && hyprctl hyprpaper unload "$old_img" 2>/dev/null

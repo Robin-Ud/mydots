@@ -60,38 +60,31 @@ require("lazy").setup({
     "williamboman/mason.nvim",
     "williamboman/mason-lspconfig.nvim",
 
-    -- --> NOVO: O "Cérebro" do Rust (Rustaceanvim)
     {
         'mrcjkb/rustaceanvim',
-        version = '^5', -- Recomendado fixar na versão 5
-        lazy = false,   -- Carrega assim que inicia (importante para detecção de arquivo)
+        version = '^5',
+        lazy = false,
     },
 
--- --> NOVO: Syntax Highlighting Melhorado (Treesitter)
     {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
         config = function()
-            -- Tenta carregar o plugin com segurança
             local status_ok, configs = pcall(require, "nvim-treesitter.configs")
-            if not status_ok then
-                return -- Se der erro, para por aqui e não quebra o Neovim
-            end
-
+            if not status_ok then return end
             configs.setup({
-                -- Garante que instale highlight para essas linguagens
                 ensure_installed = { "c", "lua", "vim", "vimdoc", "rust", "python" },
                 highlight = { enable = true },
             })
         end
-    },    -- --> NOVO: Autocomplete (O motor que faz a janelinha aparecer)
+    },
     {
         "hrsh7th/nvim-cmp",
         dependencies = {
-            "hrsh7th/cmp-nvim-lsp", -- Sugestões do LSP
-            "hrsh7th/cmp-buffer",   -- Sugestões de palavras no arquivo
-            "hrsh7th/cmp-path",     -- Sugestões de caminhos de arquivo
-            "L3MON4D3/LuaSnip",     -- Motor de Snippets (Obrigatório pro CMP)
+            "hrsh7th/cmp-nvim-lsp",
+            "hrsh7th/cmp-buffer",
+            "hrsh7th/cmp-path",
+            "L3MON4D3/LuaSnip",
             "saadparwaiz1/cmp_luasnip",
         },
         config = function()
@@ -103,19 +96,19 @@ require("lazy").setup({
                     end,
                 },
                 mapping = cmp.mapping.preset.insert({
-                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+                    ['<C-b>']     = cmp.mapping.scroll_docs(-4),
+                    ['<C-f>']     = cmp.mapping.scroll_docs(4),
                     ['<C-Space>'] = cmp.mapping.complete(),
-                    ['<C-e>'] = cmp.mapping.abort(),
-                    ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Enter confirma
-                    ['<Tab>'] = cmp.mapping.select_next_item(),        -- Tab navega pra baixo
-                    ['<S-Tab>'] = cmp.mapping.select_prev_item(),      -- Shift+Tab navega pra cima
+                    ['<C-e>']     = cmp.mapping.abort(),
+                    ['<CR>']      = cmp.mapping.confirm({ select = true }),
+                    ['<Tab>']     = cmp.mapping.select_next_item(),
+                    ['<S-Tab>']   = cmp.mapping.select_prev_item(),
                 }),
                 sources = cmp.config.sources({
-                    { name = 'nvim_lsp' }, -- Prioridade: LSP
-                    { name = 'luasnip' },  -- Prioridade: Snippets
+                    { name = 'nvim_lsp' },
+                    { name = 'luasnip' },
                 }, {
-                    { name = 'buffer' },   -- Prioridade: Texto do buffer
+                    { name = 'buffer' },
                 })
             })
         end
@@ -144,7 +137,7 @@ require("lazy").setup({
 -- ========================================================================== --
 require("mason").setup()
 require("mason-lspconfig").setup({
-    ensure_installed = { "clangd", "pyright" }, -- Garanta que tem vírgula aqui
+    ensure_installed = { "clangd", "pyright" },
     handlers = {
         function(server_name)
             -- rustaceanvim gerencia o rust_analyzer diretamente
@@ -163,10 +156,11 @@ require("mason-lspconfig").setup({
             end
 
             require('lspconfig')[server_name].setup(config)
-        end, -- Fecha a function
-    }, -- Fecha o handlers
-}) 
--- Fecha o setup-- ========================================================================== --
+        end,
+    },
+})
+
+-- ========================================================================== --
 -- 5. AJUSTES FINAIS E ATALHOS DO LSP
 -- ========================================================================== --
 vim.opt.smartindent = false
@@ -180,11 +174,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
         vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
         vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
         vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
-        vim.keymap.set('n', '<leader>f', function() 
-            vim.lsp.buf.format { async = true } 
+        vim.keymap.set('n', '<leader>f', function()
+            vim.lsp.buf.format { async = true }
         end, opts)
-
-        -- --> NOVO: Atalho para ligar/desligar as dicas de tipo (Inlay Hints)
         vim.keymap.set('n', '<leader>h', function()
             vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
         end, { desc = "Toggle Inlay Hints" })

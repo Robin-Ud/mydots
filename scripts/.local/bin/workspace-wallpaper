@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Escuta eventos do Hyprland e troca wallpaper ao mudar de workspace
+
+WALLPAPER_DIR="$HOME/etc/wallpapers"
+MONITOR="eDP-1"
+
+while true; do
+    SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+    [[ -S "$SOCKET" ]] || { sleep 2; continue; }
+
+    socat -U - "UNIX-CONNECT:$SOCKET" 2>/dev/null | while IFS= read -r line; do
+        [[ "$line" != "workspace>>"* ]] && continue
+        ws="${line#workspace>>}"
+        img=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f -name "${ws}_*" | head -1)
+        [[ -n "$img" ]] && hyprctl hyprpaper wallpaper "$MONITOR,$img" 2>/dev/null
+    done
+
+    sleep 1
+done

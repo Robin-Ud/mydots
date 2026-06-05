@@ -1,1 +1,32 @@
-scripts/.local/bin/
+# Binários e executáveis — não versionar
+scripts/.local/bin/claude
+
+# Artefatos gerados por pip/conda — não são dotfiles, não versionar
+scripts/.local/bin/__pycache__/
+scripts/.local/bin/debugpy
+scripts/.local/bin/debugpy-adapter
+scripts/.local/bin/dotenv
+scripts/.local/bin/ipython
+scripts/.local/bin/ipython3
+scripts/.local/bin/jlpm
+scripts/.local/bin/jsonpointer
+scripts/.local/bin/jupyter
+scripts/.local/bin/jupyter-*
+scripts/.local/bin/markdown-it
+scripts/.local/bin/motoregis
+scripts/.local/bin/pybabel
+scripts/.local/bin/pyjson5
+scripts/.local/bin/py.test
+scripts/.local/bin/pytest
+scripts/.local/bin/qgis
+scripts/.local/bin/qgis_process
+scripts/.local/bin/send2trash
+scripts/.local/bin/vba_extract.py
+scripts/.local/bin/wsdump
+
+# Os 5 wrappers idênticos do claude-monitor (gerados por pip, não manuais)
+scripts/.local/bin/ccm
+scripts/.local/bin/ccmonitor
+scripts/.local/bin/claude-code-monitor
+scripts/.local/bin/claude-monitor
+scripts/.local/bin/cmonitor
