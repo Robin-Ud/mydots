@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Gera hyprpaper.conf a partir de ~/etc/wallpapers/ e aplica um wallpaper aleatório
+
+WALLPAPER_DIR="$HOME/etc/wallpapers"
+CONF="$HOME/.config/hypr/hyprpaper.conf"
+
+mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort)
+
+if [[ ${#images[@]} -eq 0 ]]; then
+    echo "Nenhuma imagem encontrada em $WALLPAPER_DIR" >&2
+    exit 1
+fi
+
+chosen="${images[RANDOM % ${#images[@]}]}"
+
+{
+    for img in "${images[@]}"; do
+        echo "preload = $img"
+    done
+    echo ""
+    echo "wallpaper = eDP-1,$chosen"
+} > "$CONF"
+
+pkill -x hyprpaper 2>/dev/null
+sleep 0.2
+hyprpaper &
