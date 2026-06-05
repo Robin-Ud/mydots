@@ -19,15 +19,9 @@ echo "========================================="
 # 4. O Seletor de Linguagens
 case "$ext" in
     c)
-        # Compilação C
-        # -o define o nome do binário temporário (.temp_run)
-        gcc -Wall -Wextra "$arquivo" -o .temp_run
-        
-        # Verifica se o GCC deu erro (exit code diferente de 0)
-        if [ $? -eq 0 ]; then
+        if gcc -Wall -Wextra "$arquivo" -o .temp_run; then
             echo -e "✅ Compilado com sucesso.\n--- Saída ---"
             ./.temp_run
-            # Limpa a sujeira depois de rodar
             rm -f .temp_run
         else
             echo "❌ Falha na compilação. Corrija os erros acima."
