@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# kill-wallpaper — Remove o wallpaper atual da fila e avança para o próximo
+
+WALLPAPER_DIR="$HOME/etc/wallpapers"
+STATE="$HOME/.local/share/hypr-wallpaper-idx"
+
+mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort -V)
+
+total=${#images[@]}
+[[ $total -le 1 ]] && {
+    notify-send "kill-wallpaper" "Só resta um wallpaper — não é possível remover." 2>/dev/null
+    exit 1
+}
+
+idx=0
+[[ -f "$STATE" ]] && idx=$(<"$STATE")
+current="${images[$idx]}"
+
+# Descarrega do hyprpaper antes de deletar
+hyprctl hyprpaper unload "$current" 2>/dev/null
+
+rm -- "$current"
+
+# Registra no blacklist do sync-dji para não reimportar
+BLACKLIST="$HOME/.local/share/dji-sync/deleted.txt"
+mkdir -p "$(dirname "$BLACKLIST")"
+basename "$current" >> "$BLACKLIST"
+
+# Recalcula com a lista atualizada (um item a menos)
+mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort -V)
+
+new_total=${#images[@]}
+next_idx=$(( idx % new_total ))
+new_img="${images[$next_idx]}"
+
+echo "$next_idx" > "$STATE"
+
+hyprctl hyprpaper preload "$new_img"
+for _ in $(seq 1 20); do
+    hyprctl hyprpaper listloaded 2>/dev/null | grep -qF "$new_img" && break
+    sleep 0.1
+done
+hyprctl hyprpaper wallpaper "eDP-1,$new_img"
+
+notify-send "Wallpaper removido" "$(basename "$current")" 2>/dev/null
