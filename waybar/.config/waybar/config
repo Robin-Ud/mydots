@@ -7,7 +7,7 @@
     // Módulos carregados em cada posição
     "modules-left": ["hyprland/workspaces", "hyprland/window"],
     "modules-center": [], 
-    "modules-right": ["idle_inhibitor", "pulseaudio", "network", "battery", "clock", "tray"],
+    "modules-right": ["idle_inhibitor", "pulseaudio", "network", "bluetooth", "battery", "clock", "tray"],
 
     // --- Configuração dos Módulos ---
 
