@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# next-wallpaper — Troca para o próximo wallpaper sem reiniciar o Hyprland
+#
+# Ativado pelo atalho Super + W (configurado no hyprland.conf).
+# Avança o índice, pré-carrega a nova imagem e aplica no monitor.
+# A imagem anterior é descarregada da memória para não acumular.
+
+WALLPAPER_DIR="$HOME/etc/wallpapers"
+
+# Mesmo arquivo de índice usado pelo set-wallpaper (compartilham a fila)
+STATE="$HOME/.local/share/hypr-wallpaper-idx"
+
+# Coleta imagens em ordem
+mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort -V)
+
+total=${#images[@]}
+[[ $total -eq 0 ]] && exit 1
+
+# Lê o índice atual e guarda a imagem antiga para descarregar depois
+idx=0
+[[ -f "$STATE" ]] && idx=$(<"$STATE")
+old_img="${images[$idx]}"
+
+# Avança para a próxima imagem
+idx=$(( (idx + 1) % total ))
+echo "$idx" > "$STATE"
+new_img="${images[$idx]}"
+
+# Pré-carrega a nova imagem no hyprpaper
+hyprctl hyprpaper preload "$new_img"
+
+# Aguarda o preload terminar (até 2 segundos, checa a cada 0.1s)
+for _ in $(seq 1 20); do
+    hyprctl hyprpaper listloaded 2>/dev/null | grep -qF "$new_img" && break
+    sleep 0.1
+done
+
+# Aplica a nova imagem e libera a antiga da memória
+hyprctl hyprpaper wallpaper "eDP-1,$new_img"
+[[ "$old_img" != "$new_img" ]] && hyprctl hyprpaper unload "$old_img" 2>/dev/null
