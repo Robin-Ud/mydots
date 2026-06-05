@@ -11,11 +11,19 @@ MTP_PATH="$MTP_BASE/Armazenamento%20interno%20compartilhado/DCIM/DJI%20Album"
 
 mkdir -p "$STATE_DIR" "$WALLPAPER_DIR"
 
+echo "Conectando ao celular..."
+
 if ! gio list "$MTP_PATH/" &>/dev/null; then
-    notify-send "sync-dji" "Celular não encontrado via MTP. Conecte e tente novamente." 2>/dev/null
-    echo "Erro: dispositivo MTP inacessível." >&2
+    echo ""
+    echo "ERRO: dispositivo MTP nao encontrado."
+    echo "Conecte o celular e desbloqueie a tela."
+    echo ""
+    read -rsp "Pressione Enter para fechar..." _
     exit 1
 fi
+
+echo "Lendo DJI Album..."
+echo ""
 
 declare -A blacklisted
 if [[ -f "$BLACKLIST" ]]; then
@@ -25,7 +33,9 @@ if [[ -f "$BLACKLIST" ]]; then
 fi
 
 copied=0
+skipped_exists=0
 skipped_blacklist=0
+errors=0
 
 while IFS= read -r filename; do
     [[ -z "$filename" ]] && continue
@@ -37,16 +47,30 @@ while IFS= read -r filename; do
     fi
 
     dest="$WALLPAPER_DIR/$filename"
-    [[ -f "$dest" ]] && continue
+    if [[ -f "$dest" ]]; then
+        (( skipped_exists++ ))
+        continue
+    fi
 
+    echo -n "  Copiando $filename ... "
     if gio copy "$MTP_PATH/$filename" "$dest"; then
+        echo "ok"
         (( copied++ ))
     else
-        echo "Erro ao copiar: $filename" >&2
+        echo "ERRO"
+        (( errors++ ))
     fi
 done < <(gio list "$MTP_PATH/")
 
-msg="$copied nova(s) foto(s) importada(s)"
-[[ $skipped_blacklist -gt 0 ]] && msg+=" · $skipped_blacklist ignorada(s) (excluídas antes)"
-notify-send "sync-dji" "$msg" 2>/dev/null
-echo "$msg"
+echo ""
+echo "----------------------------------------"
+echo "  Importadas : $copied"
+echo "  Ja existiam: $skipped_exists"
+echo "  Ignoradas  : $skipped_blacklist  (excluidas antes)"
+[[ $errors -gt 0 ]] && echo "  Erros      : $errors"
+echo "----------------------------------------"
+echo ""
+
+notify-send "sync-dji" "$copied nova(s) foto(s) importada(s)" 2>/dev/null
+
+read -rsp "Pressione Enter para fechar..." _
