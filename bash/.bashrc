@@ -1,68 +1,64 @@
-# .bashrc
+# .bashrc — Configuração do shell interativo (Bash)
+# Carregado toda vez que você abre um terminal novo.
 
 # ===========================================================
-# 1. DEFINIÇÕES GLOBAIS E DE SISTEMA
+# 1. SISTEMA — configurações globais e PATH
 # ===========================================================
-# Source global definitions
+
+# Carrega as definições globais do sistema (Fedora)
 if [ -f /etc/bashrc ]; then
-  . /etc/bashrc
+    . /etc/bashrc
 fi
 
-# --- XDG & LIMPEZA DA HOME ---
-# Força o NPM a usar pastas ocultas corretas em vez de sujar a raiz
-export NPM_CONFIG_USERCONFIG="$HOME/.config/npm/npmrc"
-export NPM_CONFIG_CACHE="$HOME/.cache/npm"
-export EDITOR=nvim
-
-# User specific environment
-# Adiciona apenas .local/bin (já que você moveu o bin antigo pra lá)
+# Garante que ~/.local/bin esteja no PATH (onde ficam seus scripts)
 if ! [[ "$PATH" =~ "$HOME/.local/bin:" ]]; then
-  PATH="$HOME/.local/bin:$PATH"
+    PATH="$HOME/.local/bin:$PATH"
 fi
 export PATH
 
-# Uncomment the following line if you don't like systemctl's auto-paging feature:
-# export SYSTEMD_PAGER=
+# Editor padrão para o terminal (git commit, etc.)
+export EDITOR=nvim
 
-# Carrega configurações modulares (se existirem)
+# NPM: usa pastas corretas em vez de criar lixo na home
+export NPM_CONFIG_USERCONFIG="$HOME/.config/npm/npmrc"
+export NPM_CONFIG_CACHE="$HOME/.cache/npm"
+
+# Carrega configs modulares da pasta ~/.bashrc.d/ (se existirem)
 if [ -d ~/.bashrc.d ]; then
-  for rc in ~/.bashrc.d/*; do
-    if [ -f "$rc" ]; then
-      . "$rc"
-    fi
-  done
+    for rc in ~/.bashrc.d/*; do
+        [ -f "$rc" ] && . "$rc"
+    done
+    unset rc
 fi
-unset rc
 
 # ===========================================================
-# 2. ALIASES
+# 2. ALIASES — atalhos de comandos
 # ===========================================================
-# Sistema
-# Atualiza e salva o log no CACHE para não sujar a home
-alias up='sudo dnf update -y --refresh && echo $(date +%F) > ~/.cache/last_upd && echo "✅ Scripts sincronizados!"'
-alias :q='exit'
-alias code='code .'
+
+alias :q='exit'        # Sair como no vim
+alias code='code .'    # Abre o VS Code na pasta atual
+
 # ===========================================================
 # 3. FUNÇÕES
 # ===========================================================
+
+# verificar_uptime — avisa quando o sistema está ligado há muito tempo
+# Útil para lembrar de reiniciar e aplicar atualizações de kernel.
 verificar_uptime() {
-    # Configuração
-    local DIAS_LIMITE=1            # Avisar se ligado há mais de X dias
-    local HORAS_SONECA=2           # Se negar, perguntar de novo em X horas
-    # MUDANÇA: Salva o arquivo de controle no cache, não na home
-    local ARQUIVO_SONECA="$HOME/.cache/soneca_reboot_time"
+    local DIAS_LIMITE=1                                    # Avisa se ligado há mais de X dias
+    local HORAS_SONECA=2                                   # Pergunta de novo em X horas se você negar
+    local ARQUIVO_SONECA="$HOME/.cache/soneca_reboot_time" # Controla o intervalo entre perguntas
 
-    # 1. Checa Uptime (dias)
-    local UPTIME_SEG=$(cat /proc/uptime | cut -d. -f1)
-    local UPTIME_DIAS=$((UPTIME_SEG / 86400))
+    local UPTIME_SEG
+    UPTIME_SEG=$(cut -d. -f1 /proc/uptime)
+    local UPTIME_DIAS=$(( UPTIME_SEG / 86400 ))
 
-    # 2. Checa Soneca (timestamp)
-    local AGORA=$(date +%s)
-    local PROXIMA_PERGUNTA=$(cat "$ARQUIVO_SONECA" 2>/dev/null || echo 0)
+    local AGORA
+    AGORA=$(date +%s)
+    local PROXIMA_PERGUNTA
+    PROXIMA_PERGUNTA=$(cat "$ARQUIVO_SONECA" 2>/dev/null || echo 0)
 
-    # Lógica
     if [ "$UPTIME_DIAS" -ge "$DIAS_LIMITE" ] && [ "$AGORA" -ge "$PROXIMA_PERGUNTA" ]; then
-        
         echo -e "\n⚠️  ATENÇÃO: Sistema ligado há $UPTIME_DIAS dias."
         echo "   Recomendado reiniciar para aplicar kernels/libs."
         echo -n "   Reiniciar agora? (s/N): "
@@ -72,52 +68,57 @@ verificar_uptime() {
             echo "Reiniciando..."
             sudo reboot
         else
-            # Calcula nova soneca: Agora + (Horas * 3600)
-            local NOVA_HORA=$((AGORA + HORAS_SONECA * 3600))
-            echo "$NOVA_HORA" > "$ARQUIVO_SONECA"
-            
+            echo $(( AGORA + HORAS_SONECA * 3600 )) > "$ARQUIVO_SONECA"
             echo "Beleza. Te lembro daqui a $HORAS_SONECA horas."
             sleep 1
-            
-            # Limpa o aviso para deixar o terminal pronto para o Pokemon
-            clear 
+            clear
         fi
     fi
 }
+
+# hq — abre HQs (PDF, CBR, CBZ) com o YACReader via fzf
+# Busca em ~/Imagens/hqs/ e abre a selecionada
 hq() {
-    # Pasta das HQs
     local pasta="$HOME/Imagens/hqs"
 
-    # Verifica se a pasta existe antes de tentar
     if [ ! -d "$pasta" ]; then
-        echo "Erro: A pasta $pasta não existe!"
+        echo "Erro: a pasta $pasta não existe."
         return 1
     fi
 
-    # Busca PDF, CBR e CBZ (case insensitive)
-    # Usa subshell () para o 'cd' não mudar você de pasta no terminal
     local file
-    file=$(cd "$pasta" && find . -type f \( -iname "*.pdf" -o -iname "*.cbr" -o -iname "*.cbz" \) | sed "s|^\./||" | fzf --layout=reverse --border --info=inline --prompt="HQ > ")
-    
-    # Se escolheu algo, abre com o YACReader (caminho completo para não dar erro)
+    file=$(cd "$pasta" && find . -type f \( -iname "*.pdf" -o -iname "*.cbr" -o -iname "*.cbz" \) \
+        | sed "s|^\./||" \
+        | fzf --layout=reverse --border --info=inline --prompt="HQ > ")
+
     if [ -n "$file" ]; then
         flatpak run com.yacreader.YACReader "$pasta/$file" > /dev/null 2>&1 &
     fi
 }
-function y() {
-    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+
+# y — abre o yazi (gerenciador de arquivos no terminal) e navega até a pasta escolhida
+# Ao sair do yazi, o terminal já está na pasta que você estava navegando
+y() {
+    local tmp
+    tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
     yazi "$@" --cwd-file="$tmp"
     if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
         cd -- "$cwd"
     fi
     rm -f -- "$tmp"
 }
+
 # ===========================================================
-# 4. EXECUÇÃO AO INICIAR (Interactive Shell Only)
+# 4. INICIALIZAÇÃO — roda ao abrir cada terminal
 # ===========================================================
 
-# starship
+# Prompt bonito com informações de git, tempo de comando, etc.
 eval "$(starship init bash)"
 
-
+# Ferramentas instaladas via Rust/Cargo
 . "$HOME/.cargo/env"
+
+# Atuin: histórico de comandos melhorado (com busca e sync)
+. "$HOME/.atuin/bin/env"
+[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
+eval "$(atuin init bash)"

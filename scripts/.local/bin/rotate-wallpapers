@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# rotate-wallpapers — Organiza e gira a numeração dos wallpapers
+#
+# O que faz:
+#   1. Imagens sem prefixo numérico (ex: "foto.jpg") recebem um número
+#      automaticamente e vão para o final da sequência
+#   2. Gira a numeração de todos: N → N+1, o último vira 1
+#      Resultado: o próximo boot mostrará o wallpaper que era o 2, etc.
+#
+# Uso manual: rotate-wallpapers
+
+WALLPAPER_DIR="$HOME/etc/wallpapers"
+
+# --- Passo 1: Numerar imagens sem prefixo ---
+
+# Descobre o maior número já usado na pasta
+max=0
+while IFS= read -r f; do
+    base=$(basename "$f")
+    num="${base%%_*}"             # Pega tudo antes do primeiro "_"
+    (( 10#$num > max )) && max=$((10#$num))
+done < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f -name '[0-9]*_*' 2>/dev/null)
+
+# Renomeia imagens sem número, colocando-as no final da sequência
+while IFS= read -r f; do
+    base=$(basename "$f")
+    [[ "$base" =~ ^[0-9]+_ ]] && continue   # Já tem número, pula
+    max=$((max + 1))
+    mv "$f" "$WALLPAPER_DIR/${max}_${base}"
+done < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \))
+
+# --- Passo 2: Girar a numeração ---
+
+# Coleta todos os arquivos numerados em ordem
+mapfile -t files < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f -name '[0-9]*_*' | sort -V)
+total=${#files[@]}
+[[ $total -eq 0 ]] && exit 0
+
+# Renomeia usando prefixo "tmp_" para não colidir durante a rotação
+# Exemplo com 3 arquivos: 1→2, 2→3, 3→1
+for f in "${files[@]}"; do
+    base=$(basename "$f")
+    num="${base%%_*}"
+    rest="${base#*_}"
+    new_num=$(( (10#$num % total) + 1 ))
+    mv "$f" "$WALLPAPER_DIR/tmp_${new_num}_${rest}"
+done
+
+# Remove o prefixo "tmp_" para finalizar a renomeação
+for f in "$WALLPAPER_DIR"/tmp_[0-9]*_*; do
+    [[ -f "$f" ]] || continue
+    base=$(basename "$f")
+    mv "$f" "$WALLPAPER_DIR/${base#tmp_}"
+done

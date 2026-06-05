@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# set-wallpaper — Inicializa o hyprpaper com o próximo wallpaper da fila
+#
+# Chamado pelo Hyprland no boot (exec-once = set-wallpaper).
+# Cada vez que o sistema inicia, avança para o próximo wallpaper da pasta,
+# criando uma rotação automática a cada sessão.
+#
+# As imagens devem estar em: ~/etc/wallpapers/
+# Formatos suportados: jpg, jpeg, png, webp
+
+WALLPAPER_DIR="$HOME/etc/wallpapers"
+CONF="$HOME/.config/hypr/hyprpaper.conf"
+
+# Arquivo que guarda o índice do wallpaper atual entre sessões
+STATE="$HOME/.local/share/hypr-wallpaper-idx"
+
+# Coleta todas as imagens em ordem (sort -V respeita numeração: 1, 2, 10, ...)
+mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort -V)
+
+total=${#images[@]}
+[[ $total -eq 0 ]] && { echo "Nenhuma imagem em $WALLPAPER_DIR" >&2; exit 1; }
+
+# Avança o índice (0 → 1 → 2 → ... → total-1 → 0)
+idx=0
+[[ -f "$STATE" ]] && idx=$(<"$STATE")
+idx=$(( (idx + 1) % total ))
+echo "$idx" > "$STATE"
+
+img="${images[$idx]}"
+
+# Gera o hyprpaper.conf com apenas a imagem escolhida pré-carregada
+printf 'preload = %s\nwallpaper = eDP-1,%s\n' "$img" "$img" > "$CONF"
+
+# Reinicia o hyprpaper para aplicar a nova configuração
+pkill -x hyprpaper 2>/dev/null
+sleep 0.2
+hyprpaper &

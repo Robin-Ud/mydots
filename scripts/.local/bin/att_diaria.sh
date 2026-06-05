@@ -1,43 +1,35 @@
 #!/bin/bash
+# att_diaria.sh — Atualização diária do sistema
+# Chamado pelo Hyprland no boot (exec-once = kitty -e att_diaria.sh).
+# Abre no kitty, roda um cmatrix de boas-vindas e atualiza via dnf.
+# Se já atualizou hoje, fecha a janela imediatamente sem fazer nada.
 
-# 1. PREPARAÇÃO (Limpa tudo antes de começar)
 clear
 sleep 0.5
 
-# 2. MATRIX
-# Roda o Matrix e espera você teclar algo
-cmatrix -ba -s 
+# Animação de abertura — pressione qualquer tecla para pular
+cmatrix -ba -s
 
-# Assim que sair do Matrix:
 clear
 
-# 3. VERIFICAÇÃO RAPIDA
-# Se já atualizou hoje, mata a janela imediatamente
-if [ "$(cat ~/.last_upd 2>/dev/null)" == "$(date +%F)" ]; then
-    kill -9 $PPID
+# Verifica se já atualizou hoje (evita atualizar duas vezes no mesmo dia)
+ARQUIVO_CONTROLE="$HOME/.cache/last_upd"
+if [ "$(cat "$ARQUIVO_CONTROLE" 2>/dev/null)" == "$(date +%F)" ]; then
+    kill -9 $PPID   # Fecha a janela do kitty
+    exit 0
 fi
 
-# 4. ATUALIZAÇÃO
 echo "🔍 Buscando atualizações..."
 
-# Tenta atualizar
 if sudo dnf update -y --refresh; then
-    # --- SUCESSO ---
-    echo $(date +%F) > ~/.last_upd
+    date +%F > "$ARQUIVO_CONTROLE"
     echo ""
-    echo "✅ Atualizado!"
+    echo "✅ Sistema atualizado!"
     echo "👋 Fechando..."
     sleep 2
-    
-    # --- A MÁGICA DO CLEAR ---
-    clear 
-    
-    # --- O ASSASSINO ---
-    # Mata o processo pai (o terminal Kitty/Alacritty) forçadamente.
-    # Isso garante que a janela feche, não importa a configuração.
+    clear
     kill -9 $PPID
 else
-    # --- ERRO ---
     echo ""
     echo "❌ Erro na atualização."
     read -p "Enter para fechar..."
