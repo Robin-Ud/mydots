@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""Cheatsheet de keybinds do Hyprland — exibe no rofi."""
+
+import subprocess
+
+# Formato: (seção, combo, descrição)
+KEYBINDS = [
+    # ── Apps ──────────────────────────────────────────────────────────
+    ("Apps",         "Super + Enter",              "Terminal"),
+    ("Apps",         "Alt + Enter",                "Navegador"),
+    ("Apps",         "Super + D",                  "Launcher de apps"),
+    ("Apps",         "Super + O",                  "Obsidian (workspace atual)"),
+    ("Apps",         "Super + X",                  "Xournal++"),
+    ("Apps",         "Super + G",                  "QGIS"),
+    ("Apps",         "Shift + Enter",              "Gerenciador de arquivos (yazi)"),
+
+    # ── Sistema ───────────────────────────────────────────────────────
+    ("Sistema",      "Super + Q",                  "Fechar janela"),
+    ("Sistema",      "Super + Shift + C",          "Recarregar config"),
+    ("Sistema",      "Super + Shift + E",          "Sair do Hyprland"),
+
+    # ── Wallpaper & Hardware ──────────────────────────────────────────
+    ("Wallpaper & Hardware", "Super + W",          "Próximo wallpaper"),
+    ("Wallpaper & Hardware", "Super + /",          "Este cheatsheet"),
+    ("Wallpaper & Hardware", "Alt + W",            "Alternar tablet (notebook ↔ HDMI)"),
+
+    # ── Screenshot ───────────────────────────────────────────────────
+    ("Screenshot",   "PrtSc",                      "Tela inteira → clipboard"),
+    ("Screenshot",   "Ctrl + PrtSc",               "Tela inteira → ~/Imagens"),
+    ("Screenshot",   "Shift + PrtSc",              "Selecionar área → clipboard"),
+    ("Screenshot",   "Ctrl + Shift + PrtSc",       "Selecionar área → ~/Imagens"),
+
+    # ── Navegação de foco ─────────────────────────────────────────────
+    ("Foco",         "Super + H / J / K / L",      "Mover foco (vim)"),
+    ("Foco",         "Super + ← ↓ ↑ →",           "Mover foco (setas)"),
+
+    # ── Mover janelas ─────────────────────────────────────────────────
+    ("Janelas",      "Super + Shift + H/J/K/L",    "Mover janela (vim)"),
+    ("Janelas",      "Super + Shift + ← ↓ ↑ →",   "Mover janela (setas)"),
+    ("Janelas",      "Super + F",                  "Tela cheia"),
+    ("Janelas",      "Super + Shift + Space",       "Alternar flutuante"),
+    ("Janelas",      "Super + P",                  "Pin (sempre visível)"),
+    ("Janelas",      "Super + E",                  "Alternar split H/V"),
+    ("Janelas",      "Super + R  →  H/J/K/L",      "Modo resize (Esc para sair)"),
+    ("Janelas",      "Super + drag LClick",         "Mover janela com mouse"),
+    ("Janelas",      "Super + drag RClick",         "Redimensionar com mouse"),
+
+    # ── Workspaces ───────────────────────────────────────────────────
+    ("Workspaces",   "Super + 1 … 9",              "Ir para workspace"),
+    ("Workspaces",   "Super + Shift + 1 … 8",      "Mover janela para workspace"),
+    ("Workspaces",   "Super + Shift + 9 / 0",      "Mover janela (silencioso)"),
+    ("Workspaces",   "Super + Scroll ↓↑",          "Workspace próx. / ant."),
+
+    # ── Scratchpad ───────────────────────────────────────────────────
+    ("Scratchpad",   "Super + -",                  "Mostrar / esconder Obsidian"),
+    ("Scratchpad",   "Super + Shift + -",          "Enviar janela para scratchpad"),
+
+    # ── Mídia ────────────────────────────────────────────────────────
+    ("Mídia",        "Vol+ / Vol-",                "Volume +5% / -5%"),
+    ("Mídia",        "Mute",                       "Silenciar áudio"),
+    ("Mídia",        "MicMute",                    "Silenciar microfone"),
+    ("Mídia",        "Bright+ / Bright-",          "Brilho +10% / -10%"),
+]
+
+def build_lines(entries):
+    lines = []
+    current_section = None
+    for section, combo, desc in entries:
+        if section != current_section:
+            if lines:
+                lines.append("")
+            bar = "─" * max(1, 46 - len(section))
+            lines.append(f"  ── {section} {bar}")
+            current_section = section
+        lines.append(f"     {combo:<34}  {desc}")
+    return "\n".join(lines)
+
+def main():
+    text = build_lines(KEYBINDS)
+    subprocess.run(
+        [
+            "rofi", "-dmenu", "-p", "⌨  Keybinds", "-i",
+            "-no-custom",
+            "-theme-str",
+            (
+                "window  { width: 50%; }"
+                "listview { lines: 18; }"
+                "entry   { placeholder: \" Filtrar…\"; }"
+                "element-text { font: \"JetBrainsMono NF 9\"; }"
+            ),
+        ],
+        input=text,
+        text=True,
+    )
+
+if __name__ == "__main__":
+    main()
