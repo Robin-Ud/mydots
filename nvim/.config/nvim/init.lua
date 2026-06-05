@@ -1,35 +1,47 @@
--- ========================================================================== --
--- 1. CONFIGURAÇÕES BÁSICAS (Vim Options)
--- ========================================================================== --
-vim.opt.number = true
-vim.opt.relativenumber = true
-vim.opt.clipboard = "unnamedplus"
-vim.opt.tabstop = 4
-vim.opt.shiftwidth = 4
-vim.opt.expandtab = true
-vim.g.mapleader = " "
-vim.opt.swapfile = false
+-- init.lua — Configuração do Neovim
+-- Carregado toda vez que o Neovim abre.
 
 -- ========================================================================== --
--- 2. SEUS ATALHOS CUSTOMIZADOS (Keymaps)
+-- 1. OPÇÕES BÁSICAS
 -- ========================================================================== --
+vim.opt.number         = true      -- Mostra o número de cada linha
+vim.opt.relativenumber = true      -- Número relativo (útil para pular linhas com vim)
+vim.opt.clipboard      = "unnamedplus"  -- Copia/cola integrado com o clipboard do sistema
+vim.opt.tabstop        = 4         -- Tab visual = 4 espaços
+vim.opt.shiftwidth     = 4         -- Indentação automática = 4 espaços
+vim.opt.expandtab      = true      -- Usa espaços em vez de \t
+vim.opt.swapfile       = false     -- Sem arquivo .swp poluindo a pasta
+vim.opt.smartindent    = false     -- Deixa o LSP cuidar da indentação
+vim.opt.cindent        = false
+vim.opt.indentexpr     = ""
+
+vim.g.mapleader = " "              -- Espaço como tecla líder (ex: <leader>w = espaço + w)
+
+-- ========================================================================== --
+-- 2. ATALHOS CUSTOMIZADOS
+-- ========================================================================== --
+
+-- ç / Ç — insere linha vazia abaixo/acima sem sair do modo normal
 vim.keymap.set('n', 'ç', 'm`o<Esc>``', { noremap = true, silent = true })
 vim.keymap.set('n', 'Ç', 'm`O<Esc>``', { noremap = true, silent = true })
-vim.keymap.set('n', '<A-m>', ':w <bar> !tcd %<CR>', { noremap = true, silent = false, desc = "Rodar TCD" })
+
+-- Alt+M — salva e roda o arquivo atual com o script tcd
+vim.keymap.set('n', '<A-m>', ':w <bar> !tcd %<CR>', { noremap = true, silent = false, desc = "Rodar com tcd" })
+
+-- <leader>w — salva o arquivo
 vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = 'Salvar' })
 
--- Mostra o erro em um popup quando o cursor para (CursorHold)
+-- Mostra diagnósticos (erros/avisos do LSP) num popup quando o cursor para
 vim.api.nvim_create_autocmd("CursorHold", {
-  callback = function()
-    vim.diagnostic.open_float(nil, { focusable = false })
-  end,
+    callback = function()
+        vim.diagnostic.open_float(nil, { focusable = false })
+    end,
 })
 
 -- ========================================================================== --
--- 3. GERENCIADOR DE PLUGINS (Lazy.nvim)
+-- 3. CONFIGURAÇÃO DO RUST ANALYZER
+-- Deve ser definida ANTES do lazy.nvim carregar o rustaceanvim
 -- ========================================================================== --
-
--- Deve ser definido ANTES do lazy carregar o rustaceanvim
 vim.g.rustaceanvim = {
     server = {
         cmd = function()
@@ -42,12 +54,18 @@ vim.g.rustaceanvim = {
         end,
         settings = {
             ["rust-analyzer"] = {
-                check = { command = "clippy" },
+                check = { command = "clippy" },  -- Usa clippy em vez de cargo check
             },
         },
     },
 }
 
+-- ========================================================================== --
+-- 4. PLUGINS (Lazy.nvim)
+-- lazy.nvim é o gerenciador de plugins: instala, atualiza e carrega os plugins.
+-- ========================================================================== --
+
+-- Instala o lazy.nvim automaticamente se ainda não estiver instalado
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
     vim.fn.system({ "git", "clone", "https://github.com/folke/lazy.nvim.git", "--branch=stable", lazypath })
@@ -55,17 +73,21 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-    -- >> Ferramentas de Código (LSP)
-    "neovim/nvim-lspconfig",
-    "williamboman/mason.nvim",
+
+    -- LSP: protocolo que conecta o editor a "servidores de linguagem"
+    -- (são eles que dão autocomplete, erros, ir para definição, etc.)
+    "neovim/nvim-lspconfig",           -- Configurações prontas para vários LSPs
+    "williamboman/mason.nvim",         -- Instala LSPs com :Mason
     "williamboman/mason-lspconfig.nvim",
 
+    -- Rust: plugin especializado que usa o rust-analyzer com mais recursos
     {
         'mrcjkb/rustaceanvim',
         version = '^5',
         lazy = false,
     },
 
+    -- Treesitter: parsing real da linguagem para syntax highlighting mais preciso
     {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
@@ -78,13 +100,15 @@ require("lazy").setup({
             })
         end
     },
+
+    -- nvim-cmp: autocomplete (a janelinha que aparece enquanto você digita)
     {
         "hrsh7th/nvim-cmp",
         dependencies = {
-            "hrsh7th/cmp-nvim-lsp",
-            "hrsh7th/cmp-buffer",
-            "hrsh7th/cmp-path",
-            "L3MON4D3/LuaSnip",
+            "hrsh7th/cmp-nvim-lsp",     -- Sugestões vindas do LSP
+            "hrsh7th/cmp-buffer",       -- Sugestões de palavras do arquivo atual
+            "hrsh7th/cmp-path",         -- Sugestões de caminhos de arquivo
+            "L3MON4D3/LuaSnip",         -- Motor de snippets
             "saadparwaiz1/cmp_luasnip",
         },
         config = function()
@@ -105,24 +129,24 @@ require("lazy").setup({
                     ['<S-Tab>']   = cmp.mapping.select_prev_item(),
                 }),
                 sources = cmp.config.sources({
-                    { name = 'nvim_lsp' },
-                    { name = 'luasnip' },
+                    { name = 'nvim_lsp' },  -- Prioridade 1: sugestões do LSP
+                    { name = 'luasnip' },   -- Prioridade 2: snippets
                 }, {
-                    { name = 'buffer' },
+                    { name = 'buffer' },    -- Fallback: palavras do buffer atual
                 })
             })
         end
     },
 
-    -- >> Visual (Tema)
+    -- Tokyo Night: tema escuro com cores inspiradas em Tokyo à noite
     {
         "folke/tokyonight.nvim",
         lazy = false,
-        priority = 1000,
+        priority = 1000,     -- Carrega antes de outros plugins para evitar flash
         opts = {
-            style = "night",
+            style       = "night",
             transparent = false,
-            styles = { sidebars = "dark", floats = "dark" },
+            styles      = { sidebars = "dark", floats = "dark" },
         },
         config = function(_, opts)
             require("tokyonight").setup(opts)
@@ -131,22 +155,22 @@ require("lazy").setup({
     },
 })
 
-
 -- ========================================================================== --
--- 4. CONFIGURAÇÃO DOS LSPS
+-- 5. CONFIGURAÇÃO DOS LSPs
+-- Mason instala os servidores; mason-lspconfig os conecta ao nvim-cmp.
 -- ========================================================================== --
 require("mason").setup()
 require("mason-lspconfig").setup({
-    ensure_installed = { "clangd", "pyright" },
+    ensure_installed = { "clangd", "pyright" },  -- C e Python instalados automaticamente
     handlers = {
         function(server_name)
-            -- rustaceanvim gerencia o rust_analyzer diretamente
+            -- O rustaceanvim gerencia o rust_analyzer por conta própria
             if server_name == "rust_analyzer" then return end
 
             local capabilities = require('cmp_nvim_lsp').default_capabilities()
             local config = { capabilities = capabilities }
 
-            -- Trava para não iniciar o Pyright nos scripts do jogo
+            -- Pyright: não inicia automaticamente em projetos do tipo "farmer"
             if server_name == "pyright" then
                 config.on_new_config = function(new_config, new_root_dir)
                     if new_root_dir and new_root_dir:lower():match("farmer") then
@@ -161,30 +185,27 @@ require("mason-lspconfig").setup({
 })
 
 -- ========================================================================== --
--- 5. AJUSTES FINAIS E ATALHOS DO LSP
+-- 6. ATALHOS DO LSP
+-- Ativados apenas quando um LSP está conectado ao arquivo atual (LspAttach).
 -- ========================================================================== --
-vim.opt.smartindent = false
-vim.opt.cindent = false
-vim.opt.indentexpr = "" 
-
 vim.api.nvim_create_autocmd('LspAttach', {
     callback = function(ev)
         local opts = { buffer = ev.buf }
-        
-        vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-        vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
-        vim.keymap.set('n', '<leader>f', function()
+
+        vim.keymap.set('n', 'gd',         vim.lsp.buf.definition,   opts)  -- Ir para definição
+        vim.keymap.set('n', 'K',          vim.lsp.buf.hover,         opts)  -- Documentação
+        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action,   opts)  -- Ações (fix, refactor)
+        vim.keymap.set('n', '<leader>f',  function()
             vim.lsp.buf.format { async = true }
-        end, opts)
-        vim.keymap.set('n', '<leader>h', function()
+        end, opts)                                                           -- Formatar arquivo
+        vim.keymap.set('n', '<leader>h',  function()
             vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
-        end, { desc = "Toggle Inlay Hints" })
+        end, { desc = "Toggle Inlay Hints" })                                -- Liga/desliga dicas de tipo
     end,
 })
 
 -- ========================================================================== --
--- 6. FORMATAÇÃO AUTOMÁTICA
+-- 7. FORMATAÇÃO AUTOMÁTICA AO SALVAR
 -- ========================================================================== --
 vim.api.nvim_create_autocmd("BufWritePre", {
     callback = function()
