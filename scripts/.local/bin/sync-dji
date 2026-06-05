@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# sync-dji — Importa fotos DJI do celular para ~/etc/wallpapers/
+# Nunca reimporta arquivos excluídos manualmente (via kill-wallpaper).
+
+WALLPAPER_DIR="$HOME/etc/wallpapers"
+STATE_DIR="$HOME/.local/share/dji-sync"
+BLACKLIST="$STATE_DIR/deleted.txt"
+
+MTP_BASE="mtp://motorola_moto_g86_5G_ZY32M35GDZ"
+MTP_PATH="$MTP_BASE/Armazenamento%20interno%20compartilhado/DCIM/DJI%20Album"
+
+mkdir -p "$STATE_DIR" "$WALLPAPER_DIR"
+
+if ! gio list "$MTP_PATH/" &>/dev/null; then
+    notify-send "sync-dji" "Celular não encontrado via MTP. Conecte e tente novamente." 2>/dev/null
+    echo "Erro: dispositivo MTP inacessível." >&2
+    exit 1
+fi
+
+declare -A blacklisted
+if [[ -f "$BLACKLIST" ]]; then
+    while IFS= read -r name; do
+        [[ -n "$name" ]] && blacklisted["$name"]=1
+    done < "$BLACKLIST"
+fi
+
+copied=0
+skipped_blacklist=0
+
+while IFS= read -r filename; do
+    [[ -z "$filename" ]] && continue
+    [[ "$filename" =~ \.(jpg|jpeg|png|webp|JPG|JPEG|PNG|WEBP)$ ]] || continue
+
+    if [[ -n "${blacklisted[$filename]}" ]]; then
+        (( skipped_blacklist++ ))
+        continue
+    fi
+
+    dest="$WALLPAPER_DIR/$filename"
+    [[ -f "$dest" ]] && continue
+
+    if gio copy "$MTP_PATH/$filename" "$dest"; then
+        (( copied++ ))
+    else
+        echo "Erro ao copiar: $filename" >&2
+    fi
+done < <(gio list "$MTP_PATH/")
+
+msg="$copied nova(s) foto(s) importada(s)"
+[[ $skipped_blacklist -gt 0 ]] && msg+=" · $skipped_blacklist ignorada(s) (excluídas antes)"
+notify-send "sync-dji" "$msg" 2>/dev/null
+echo "$msg"
