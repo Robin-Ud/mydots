@@ -1,19 +1,37 @@
 #!/usr/bin/env bash
-# Escuta eventos do Hyprland e troca wallpaper ao mudar de workspace
+# workspace-wallpaper — Troca o wallpaper automaticamente ao mudar de workspace
+#
+# Para usar: adicione ao hyprland.conf:
+#   exec-once = workspace-wallpaper
+#
+# Funciona escutando eventos do socket do Hyprland. Quando você muda para o
+# workspace N, ele busca a imagem N_* na pasta de wallpapers e aplica.
+#
+# Exemplo: workspace 2 → usa ~/etc/wallpapers/2_nomeDaImagem.png
+#
+# O loop externo reconecta automaticamente caso o Hyprland reinicie.
 
 WALLPAPER_DIR="$HOME/etc/wallpapers"
 MONITOR="eDP-1"
 
 while true; do
+    # Caminho do socket muda a cada instância do Hyprland
     SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+
+    # Espera o socket existir (útil se o script iniciar antes do Hyprland)
     [[ -S "$SOCKET" ]] || { sleep 2; continue; }
 
+    # Lê eventos em tempo real; filtra só mudanças de workspace
     socat -U - "UNIX-CONNECT:$SOCKET" 2>/dev/null | while IFS= read -r line; do
         [[ "$line" != "workspace>>"* ]] && continue
-        ws="${line#workspace>>}"
+
+        ws="${line#workspace>>}"   # Extrai o número do workspace (ex: "3")
+
+        # Busca a imagem com prefixo N_ (ex: 3_paisagem.jpg)
         img=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f -name "${ws}_*" | head -1)
         [[ -n "$img" ]] && hyprctl hyprpaper wallpaper "$MONITOR,$img" 2>/dev/null
     done
 
+    # Reconecta após 1 segundo se a conexão cair
     sleep 1
 done

@@ -1,24 +1,29 @@
 #!/bin/bash
+# tcd — "Test, Compile, Debug"
+# Compila e roda um arquivo de código diretamente do terminal.
+# Uso: tcd arquivo.c   ou   tcd script.py   ou   tcd programa.sh
+#
+# Suportado: C (.c), Python (.py), Shell (.sh)
 
-# 1. Pega o nome do arquivo
 arquivo="$1"
 
-# 2. Validação: Se não digitou nada OU o arquivo não existe
 if [ -z "$arquivo" ] || [ ! -f "$arquivo" ]; then
-    echo "❌ Erro: Arquivo inválido ou não encontrado."
+    echo "❌ Erro: informe um arquivo válido."
+    echo "   Uso: tcd <arquivo>"
     exit 1
 fi
 
-# 3. Extrai a extensão (ex: c, py, sh)
+# Extrai a extensão do arquivo (ex: "main.c" → "c")
 ext="${arquivo##*.}"
 
 echo "========================================="
 echo "🚀 Executando: $arquivo"
 echo "========================================="
 
-# 4. O Seletor de Linguagens
 case "$ext" in
     c)
+        # Compila com avisos detalhados (-Wall -Wextra)
+        # O binário temporário é apagado logo após rodar
         if gcc -Wall -Wextra "$arquivo" -o .temp_run; then
             echo -e "✅ Compilado com sucesso.\n--- Saída ---"
             ./.temp_run
@@ -27,19 +32,20 @@ case "$ext" in
             echo "❌ Falha na compilação. Corrija os erros acima."
         fi
         ;;
-        
+
     py)
         echo -e "🐍 Python\n--- Saída ---"
         python3 "$arquivo"
         ;;
-        
+
     sh)
         echo -e "🐚 Bash\n--- Saída ---"
         bash "$arquivo"
         ;;
 
     *)
-        echo "⚠️ A extensão '.$ext' não é suportada por este script."
+        echo "⚠️  Extensão '.$ext' não é suportada."
+        echo "   Suportado: .c, .py, .sh"
         ;;
 esac
 
