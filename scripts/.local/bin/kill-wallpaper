@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # kill-wallpaper — Remove o wallpaper atual da fila e avança para o próximo
 
-WALLPAPER_DIR="$HOME/etc/wallpapers"
+WALLPAPER_DIR="$HOME/Imagens/wallpapers"
 STATE="$HOME/.local/share/hypr-wallpaper-idx"
 
 mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
@@ -42,6 +42,10 @@ for _ in $(seq 1 20); do
     hyprctl hyprpaper listloaded 2>/dev/null | grep -qF "$new_img" && break
     sleep 0.1
 done
+new_img2="${images[$(( (next_idx + 1) % new_total ))]}"
+
+hyprctl hyprpaper preload "$new_img2" 2>/dev/null
 hyprctl hyprpaper wallpaper "eDP-1,$new_img"
+hyprctl hyprpaper wallpaper "HDMI-A-1,$new_img2" 2>/dev/null
 
 notify-send "Wallpaper removido" "$(basename "$current")" 2>/dev/null
