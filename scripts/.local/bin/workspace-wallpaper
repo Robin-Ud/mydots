@@ -4,34 +4,37 @@
 # Para usar: adicione ao hyprland.conf:
 #   exec-once = workspace-wallpaper
 #
-# Funciona escutando eventos do socket do Hyprland. Quando você muda para o
-# workspace N, ele busca a imagem N_* na pasta de wallpapers e aplica.
-#
-# Exemplo: workspace 2 → usa ~/etc/wallpapers/2_nomeDaImagem.png
+# Imagens ordenadas pelo número de sequência DJI (campo 5 do nome de arquivo,
+# ex: dji_fly_20260604_124612_0016_... → sequência 16).
+# Workspace N → N-ésima imagem nessa ordem (com módulo para ciclar).
 #
 # O loop externo reconecta automaticamente caso o Hyprland reinicie.
 
-WALLPAPER_DIR="$HOME/etc/wallpapers"
-MONITOR="eDP-1"
+WALLPAPER_DIR="$HOME/Imagens/wallpapers"
 
 while true; do
-    # Caminho do socket muda a cada instância do Hyprland
     SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
-
-    # Espera o socket existir (útil se o script iniciar antes do Hyprland)
     [[ -S "$SOCKET" ]] || { sleep 2; continue; }
 
-    # Lê eventos em tempo real; filtra só mudanças de workspace
-    socat -U - "UNIX-CONNECT:$SOCKET" 2>/dev/null | while IFS= read -r line; do
+    # Ordena imagens pelo número de sequência DJI (5º campo separado por _)
+    mapfile -t imgs < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+        \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) |
+        sort -t_ -k5,5n)
+
+    # Lê eventos sem subshell para que imgs[] seja acessível
+    while IFS= read -r line; do
         [[ "$line" != "workspace>>"* ]] && continue
+        ws="${line#workspace>>}"
+        total=${#imgs[@]}
+        [[ $total -eq 0 ]] && continue
+        idx=$(( (ws - 1) % total ))
+        img="${imgs[$idx]}"
+        if [[ -n "$img" ]]; then
+            img2="${imgs[$(( (idx + 1) % total ))]}"
+            hyprctl hyprpaper wallpaper "eDP-1,$img" 2>/dev/null
+            [[ -n "$img2" ]] && hyprctl hyprpaper wallpaper "HDMI-A-1,$img2" 2>/dev/null
+        fi
+    done < <(socat -U - "UNIX-CONNECT:$SOCKET" 2>/dev/null)
 
-        ws="${line#workspace>>}"   # Extrai o número do workspace (ex: "3")
-
-        # Busca a imagem com prefixo N_ (ex: 3_paisagem.jpg)
-        img=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f -name "${ws}_*" | head -1)
-        [[ -n "$img" ]] && hyprctl hyprpaper wallpaper "$MONITOR,$img" 2>/dev/null
-    done
-
-    # Reconecta após 1 segundo se a conexão cair
     sleep 1
 done

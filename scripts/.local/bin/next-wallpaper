@@ -5,7 +5,7 @@
 # Avança o índice, pré-carrega a nova imagem e aplica no monitor.
 # A imagem anterior é descarregada da memória para não acumular.
 
-WALLPAPER_DIR="$HOME/etc/wallpapers"
+WALLPAPER_DIR="$HOME/Imagens/wallpapers"
 
 # Mesmo arquivo de índice usado pelo set-wallpaper (compartilham a fila)
 STATE="$HOME/.local/share/hypr-wallpaper-idx"
@@ -36,6 +36,12 @@ for _ in $(seq 1 20); do
     sleep 0.1
 done
 
-# Aplica a nova imagem e libera a antiga da memória
+# eDP-1 = novo índice, HDMI-A-1 = índice seguinte (imagens sempre diferentes)
+new_img2="${images[$(( (idx + 1) % total ))]}"
+
+hyprctl hyprpaper preload "$new_img2" 2>/dev/null
+
+# Aplica nos dois monitores e libera a antiga da memória
 hyprctl hyprpaper wallpaper "eDP-1,$new_img"
+hyprctl hyprpaper wallpaper "HDMI-A-1,$new_img2" 2>/dev/null
 [[ "$old_img" != "$new_img" ]] && hyprctl hyprpaper unload "$old_img" 2>/dev/null

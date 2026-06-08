@@ -5,10 +5,10 @@
 # Cada vez que o sistema inicia, avança para o próximo wallpaper da pasta,
 # criando uma rotação automática a cada sessão.
 #
-# As imagens devem estar em: ~/etc/wallpapers/
+# As imagens devem estar em: ~/Imagens/wallpapers/
 # Formatos suportados: jpg, jpeg, png, webp
 
-WALLPAPER_DIR="$HOME/etc/wallpapers"
+WALLPAPER_DIR="$HOME/Imagens/wallpapers"
 CONF="$HOME/.config/hypr/hyprpaper.conf"
 
 # Arquivo que guarda o índice do wallpaper atual entre sessões
@@ -28,9 +28,15 @@ idx=$(( (idx + 1) % total ))
 echo "$idx" > "$STATE"
 
 img="${images[$idx]}"
+img2="${images[$(( (idx + 1) % total ))]}"
 
-# Gera o hyprpaper.conf com apenas a imagem escolhida pré-carregada
-printf 'preload = %s\nwallpaper = eDP-1,%s\n' "$img" "$img" > "$CONF"
+# Gera o hyprpaper.conf pré-carregando uma imagem por monitor (diferentes entre si)
+{
+    printf 'preload = %s\n' "$img"
+    [[ "$img2" != "$img" ]] && printf 'preload = %s\n' "$img2"
+    printf 'wallpaper = eDP-1,%s\n' "$img"
+    printf 'wallpaper = HDMI-A-1,%s\n' "$img2"
+} > "$CONF"
 
 # Reinicia o hyprpaper para aplicar a nova configuração
 pkill -x hyprpaper 2>/dev/null
