@@ -20,9 +20,11 @@ KEYBINDS = [
     ("Sistema",      "Super + Shift + E",          "Sair do Hyprland"),
 
     # ── Wallpaper & Hardware ──────────────────────────────────────────
-    ("Wallpaper & Hardware", "Super + W",          "Próximo wallpaper"),
-    ("Wallpaper & Hardware", "Super + /",          "Este cheatsheet"),
-    ("Wallpaper & Hardware", "Alt + W",            "Alternar tablet (notebook ↔ HDMI)"),
+    ("Wallpaper & Hardware", "Super + W",                "Próximo wallpaper"),
+    ("Wallpaper & Hardware", "Super + Shift + W",        "Remover wallpaper atual"),
+    ("Wallpaper & Hardware", "Super + Shift + Ctrl + W", "Sincronizar DJI"),
+    ("Wallpaper & Hardware", "Super + /",                "Este cheatsheet"),
+    ("Wallpaper & Hardware", "Alt + W",                  "Alternar tablet (notebook ↔ HDMI)"),
 
     # ── Screenshot ───────────────────────────────────────────────────
     ("Screenshot",   "PrtSc",                      "Tela inteira → clipboard"),
