@@ -1,22 +1,60 @@
 #!/usr/bin/env bash
-# sync-dji — Importa fotos DJI do celular para ~/etc/wallpapers/
+# sync-dji — Importa fotos/vídeos DJI do celular
+# Fotos → ~/Imagens/wallpapers/ | Vídeos → ~/Imagens/videos_drone/
 # Nunca reimporta arquivos excluídos manualmente (via kill-wallpaper).
 
-WALLPAPER_DIR="$HOME/etc/wallpapers"
+WALLPAPER_DIR="$HOME/Imagens/wallpapers"
+VIDEO_DIR="$HOME/Imagens/videos_drone"
 STATE_DIR="$HOME/.local/share/dji-sync"
 BLACKLIST="$STATE_DIR/deleted.txt"
 
-MTP_BASE="mtp://motorola_moto_g86_5G_ZY32M35GDZ"
-MTP_PATH="$MTP_BASE/Armazenamento%20interno%20compartilhado/DCIM/DJI%20Album"
-
-mkdir -p "$STATE_DIR" "$WALLPAPER_DIR"
+mkdir -p "$STATE_DIR" "$WALLPAPER_DIR" "$VIDEO_DIR"
 
 echo "Conectando ao celular..."
 
-if ! gio list "$MTP_PATH/" &>/dev/null; then
+# Descobre o URI do dispositivo MTP dinamicamente (gio mount -l só lista montados;
+# GIO Python lista volumes disponíveis e retorna o activation root mesmo sem montar)
+MTP_BASE=$(python3 -c "
+import gi; gi.require_version('Gio', '2.0')
+from gi.repository import Gio
+vm = Gio.VolumeMonitor.get()
+for v in vm.get_volumes():
+    ar = v.get_activation_root()
+    if ar and ar.get_uri().startswith('mtp://'):
+        print(ar.get_uri().rstrip('/'))
+        break
+" 2>/dev/null)
+
+if [[ -z "$MTP_BASE" ]]; then
     echo ""
     echo "ERRO: dispositivo MTP nao encontrado."
     echo "Conecte o celular e desbloqueie a tela."
+    echo ""
+    read -rsp "Pressione Enter para fechar..." _
+    exit 1
+fi
+
+# Monta o dispositivo se ainda nao estiver montado
+if ! gio mount -l 2>/dev/null | grep -q "$MTP_BASE"; then
+    echo "Montando dispositivo..."
+    gio mount "$MTP_BASE/" 2>/dev/null
+    sleep 1
+fi
+
+# Descobre o nome do armazenamento interno (varia por idioma do Android)
+MTP_PATH=""
+for storage in "Armazenamento%20interno%20compartilhado" "Internal%20shared%20storage" "Internal%20Storage"; do
+    candidate="$MTP_BASE/$storage/DCIM/DJI%20Album"
+    if gio list "$candidate/" &>/dev/null; then
+        MTP_PATH="$candidate"
+        break
+    fi
+done
+
+if [[ -z "$MTP_PATH" ]]; then
+    echo ""
+    echo "ERRO: DJI Album nao encontrado no dispositivo."
+    echo "Verifique se o app DJI Fly criou a pasta DCIM/DJI Album."
     echo ""
     read -rsp "Pressione Enter para fechar..." _
     exit 1
@@ -32,45 +70,61 @@ if [[ -f "$BLACKLIST" ]]; then
     done < "$BLACKLIST"
 fi
 
-copied=0
+copied_photos=0
+copied_videos=0
 skipped_exists=0
 skipped_blacklist=0
 errors=0
 
 while IFS= read -r filename; do
     [[ -z "$filename" ]] && continue
-    [[ "$filename" =~ \.(jpg|jpeg|png|webp|JPG|JPEG|PNG|WEBP)$ ]] || continue
 
-    if [[ -n "${blacklisted[$filename]}" ]]; then
-        (( skipped_blacklist++ ))
-        continue
-    fi
+    if [[ "$filename" =~ \.(jpg|jpeg|png|webp|JPG|JPEG|PNG|WEBP)$ ]]; then
+        if [[ -n "${blacklisted[$filename]}" ]]; then
+            (( skipped_blacklist++ ))
+            continue
+        fi
+        dest="$WALLPAPER_DIR/$filename"
+        if [[ -f "$dest" ]]; then
+            (( skipped_exists++ ))
+            continue
+        fi
+        echo -n "  [foto]  $filename ... "
+        if gio copy "$MTP_PATH/$filename" "$dest"; then
+            echo "ok"
+            (( copied_photos++ ))
+        else
+            echo "ERRO"
+            (( errors++ ))
+        fi
 
-    dest="$WALLPAPER_DIR/$filename"
-    if [[ -f "$dest" ]]; then
-        (( skipped_exists++ ))
-        continue
-    fi
-
-    echo -n "  Copiando $filename ... "
-    if gio copy "$MTP_PATH/$filename" "$dest"; then
-        echo "ok"
-        (( copied++ ))
-    else
-        echo "ERRO"
-        (( errors++ ))
+    elif [[ "$filename" =~ \.(mp4|mov|avi|mkv|MP4|MOV|AVI|MKV)$ ]]; then
+        dest="$VIDEO_DIR/$filename"
+        if [[ -f "$dest" ]]; then
+            (( skipped_exists++ ))
+            continue
+        fi
+        echo -n "  [video] $filename ... "
+        if gio copy "$MTP_PATH/$filename" "$dest"; then
+            echo "ok"
+            (( copied_videos++ ))
+        else
+            echo "ERRO"
+            (( errors++ ))
+        fi
     fi
 done < <(gio list "$MTP_PATH/")
 
 echo ""
 echo "----------------------------------------"
-echo "  Importadas : $copied"
-echo "  Ja existiam: $skipped_exists"
-echo "  Ignoradas  : $skipped_blacklist  (excluidas antes)"
-[[ $errors -gt 0 ]] && echo "  Erros      : $errors"
+echo "  Fotos importadas : $copied_photos"
+echo "  Videos importados: $copied_videos"
+echo "  Ja existiam      : $skipped_exists"
+echo "  Ignoradas        : $skipped_blacklist  (excluidas antes)"
+[[ $errors -gt 0 ]] && echo "  Erros            : $errors"
 echo "----------------------------------------"
 echo ""
 
-notify-send "sync-dji" "$copied nova(s) foto(s) importada(s)" 2>/dev/null
+notify-send "sync-dji" "$copied_photos foto(s) e $copied_videos video(s) importado(s)" 2>/dev/null
 
 read -rsp "Pressione Enter para fechar..." _
