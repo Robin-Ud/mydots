@@ -24,76 +24,78 @@ ls -t ~/Downloads/*.pdf 2>/dev/null | head -20
 
 Mostre a lista numerada ao usuário e pergunte qual usar. Aguarde a resposta antes de continuar.
 
-### Passo 2 — identificar professor e disciplina
+### Passo 2 — definir o arquivo de saída
 
-**Disciplina:** use sempre o nome da pasta onde o arquivo `.md` será salvo (definida no Passo 3). Nunca pergunte ao usuário.
+Determine a pasta de destino e o nome do `.md`:
+- Se $ARGUMENTS contiver um caminho `.md`, use-o
+- Caso contrário, use o diretório de trabalho atual
 
-**Professor:** tente descobrir automaticamente nesta ordem:
+O **código numérico da aula** é o número de arquivos `.md` já existentes na pasta + 1, com zero à esquerda:
 
-1. Verifique se o nome do professor aparece no texto extraído do PDF (cabeçalhos, rodapés, capa)
-2. Se não, leia as tags `#Prof...` dos outros arquivos `.md` na mesma pasta:
+```bash
+printf "%02d" $(( $(ls "<dir_da_nota>"/*.md 2>/dev/null | wc -l) + 1 ))
+# ex: 01, 02, 13
+```
+
+O **nome descritivo** do arquivo será derivado do conteúdo do PDF no Passo 4 (após extração do texto). Por ora, use um placeholder — o nome final do `.md` será `<código>_<nome-descritivo>.md`.
+
+### Passo 3 — identificar professor e disciplina
+
+**Disciplina:** use sempre o nome da pasta de destino do `.md`. Nunca pergunte ao usuário.
+
+**Professor:** descubra automaticamente nesta ordem:
+
+1. Verifique se o nome do professor aparece no texto extraído do PDF (capa, cabeçalhos, rodapés)
+2. Se não, busque a tag `#Prof...` nos outros `.md` da mesma pasta:
    ```bash
    grep -roh "#Prof[A-Z][A-Za-z]*" "<dir_da_nota>/" --include="*.md" 2>/dev/null | sort -u | head -5
    ```
-3. Se não, leia os primeiros 5 linhas de cada `.md` da pasta em busca de padrão `#Prof`
-4. Só pergunte ao usuário se nenhuma das buscas retornar resultado
+3. Se não, leia as primeiras 5 linhas de cada `.md` da pasta em busca do padrão `#Prof`
+4. Só pergunte ao usuário se nenhuma busca retornar resultado
 
-O nome do professor deve estar **completo** e no formato `#ProfNomeCompletoEmCamelCase` (ex: `#ProfThiagoLiborioRomanelli`). Nunca abrevie.
+O nome deve estar **completo** e no formato `#ProfNomeCompletoEmCamelCase` (ex: `#ProfThiagoLiborioRomanelli`). Nunca abrevie.
 
-Esses dados serão usados no Passo 7.
+### Passo 4 — extrair texto e derivar nome descritivo
 
-### Passo 3 — definir o arquivo de saída e armazenar a fonte
+Extraia o texto do PDF original:
 
-Determine o caminho do arquivo `.md` de saída:
-- Se $ARGUMENTS contiver um caminho `.md`, use-o
-- Caso contrário, use o diretório de trabalho atual com o nome do PDF convertido para `.md`
+```bash
+pdftotext "<caminho_do_pdf>" - 2>/dev/null
+```
 
-O **código da nota** é o nome do arquivo `.md` sem extensão (ex: `2026-06-09_circuitos`).
+Se o texto extraído for insuficiente (slides muito visuais, diagramas), use o Read tool nas páginas específicas — mas só quando necessário.
 
-Crie a pasta `.fontes/` no mesmo diretório do `.md` e copie o PDF principal para lá, renomeando-o:
+Com base no conteúdo extraído, derive um **nome descritivo em kebab-case** a partir do título do primeiro slide ou tema principal (ex: `introducao-ao-transistor-bipolar`). Ignore completamente o nome original do arquivo do professor.
+
+### Passo 5 — armazenar as fontes
+
+Crie `.fontes/` na pasta de destino e copie o PDF renomeado:
 
 ```bash
 mkdir -p "<dir_da_nota>/.fontes"
-cp "<caminho_do_pdf>" "<dir_da_nota>/.fontes/<código_da_nota>_slide.pdf"
+cp "<caminho_do_pdf>" "<dir_da_nota>/.fontes/<código>_<nome-descritivo>.pdf"
+# ex: .fontes/03_introducao-ao-transistor-bipolar.pdf
 ```
 
-### Passo 4 — arquivos adicionais
+Pergunte ao usuário: **"Há outros arquivos do professor em ~/Downloads para incluir nessa nota? (apostilas, exercícios, fórmulas)"**
 
-Pergunte ao usuário: **"Há outros arquivos do professor em ~/Downloads para incluir nessa nota? (ex: apostilas, exercícios, fórmulas)"**
+Se sim:
+1. Liste `~/Downloads` e mostre ao usuário
+2. Aguarde ele identificar quais incluir
+3. Para cada extra:
+   - Copie para `.fontes/<código>_extra_<n>.<ext>` (ex: `03_extra_1.pdf`)
+   - Extraia o conteúdo (`pdftotext` para PDFs, Read para imagens)
+4. Use os extras para enriquecer seções da nota onde o material se encaixar, adicionar uma seção `## Materiais Complementares` ao final e gerar perguntas `> **[?]**` sobre pontos que podem surgir em sala
 
-Se o usuário confirmar (sim / listar nomes / dizer "sim, veja lá"):
-
-1. Liste o conteúdo de `~/Downloads` e mostre ao usuário
-2. Aguarde ele identificar quais arquivos incluir
-3. Para cada arquivo extra selecionado:
-   - Copie para `.fontes/<código_da_nota>_extra_<n>.<ext>`
-   - Extraia o conteúdo (use `pdftotext` para PDFs, Read para imagens)
-4. Use o conteúdo dos extras para:
-   - Enriquecer seções da nota onde o material se encaixar
-   - Adicionar uma seção `## Materiais Complementares` ao final com pontos-chave dos extras
-   - Gerar perguntas `> **[?]**` específicas sobre o material extra — especialmente questões que podem surgir em sala a partir desses materiais
-
-Se o usuário disser não ou ignorar, prossiga apenas com o PDF principal.
-
-### Passo 5 — extrair texto dos PDFs com eficiência de tokens
-
-Use Bash com `pdftotext` para extrair o texto completo do PDF principal antes de qualquer coisa:
-
-```bash
-pdftotext "<dir_da_nota>/.fontes/<código_da_nota>_slide.pdf" - 2>/dev/null
-```
-
-Se o texto extraído for insuficiente em alguma seção (slides muito visuais, diagramas, tabelas), use o Read tool com `pages` específicas para ver aquelas páginas como imagem — mas só quando necessário.
-
-### Passo 5 — construir as notas
+### Passo 6 — construir as notas
 
 - Anote **tudo que for relevante**, mesmo o que pareça óbvio — o aluno não deve precisar copiar nada durante a aula
 - Mantenha a estrutura dos slides (seções, hierarquia)
 - Use tabelas, listas e fórmulas quando o conteúdo pedir
 - Preserve citações diretas importantes em blockquote `>`
-- Para diagramas de fluxo/circuitos, tente representar em texto ASCII simples
+- Para diagramas de fluxo/circuitos, represente em ASCII simples
 
-### Passo 6 — inserir perguntas ativas
+### Passo 7 — inserir perguntas ativas
 
 Espalhe perguntas `> **[?]**` ao longo das notas — pelo menos uma por seção, mais em seções densas. Varie o tipo conforme o conteúdo:
 
@@ -106,21 +108,23 @@ Espalhe perguntas `> **[?]**` ao longo das notas — pelo menos uma por seção,
 
 As perguntas devem forçar o aluno a prestar atenção em algo que o slide não entrega de bandeja. Não pergunte o que já está escrito no slide.
 
-### Passo 7 — salvar o arquivo
+### Passo 8 — salvar o arquivo
+
+Nome final do arquivo: `<código>_<nome-descritivo>.md` (ex: `03_introducao-ao-transistor-bipolar.md`).
 
 O arquivo deve começar com:
 
 ```markdown
-# <título da aula ou nome do PDF limpo>
+# <título da aula>
 
 #<slug-da-disciplina> #Prof<NomeCompletoEmCamelCase>
 
 ---
 ```
 
-As duas tags (`#disciplina` e `#prof/nome`) são **obrigatórias** e devem ficar no corpo logo abaixo do título, visíveis em qualquer visualizador. YAML frontmatter é opcional — só adicione se o aluno já usar ou pedir.
+As duas tags são **obrigatórias** e ficam no corpo logo abaixo do título. YAML frontmatter é opcional — só adicione se o aluno já usar ou pedir.
 
-Salve no caminho definido no Passo 3. Informe o caminho salvo e liste o conteúdo de `.fontes/`.
+Salve e informe o caminho do `.md` e o conteúdo de `.fontes/`.
 
 ---
 
@@ -128,7 +132,7 @@ Salve no caminho definido no Passo 3. Informe o caminho salvo e liste o conteúd
 
 **Ativado quando:** argumentos contêm `corrigir`.
 
-Se um caminho de arquivo for fornecido, use-o. Se não, procure o arquivo `.md` mais recentemente modificado no diretório de trabalho atual.
+Se um caminho de arquivo for fornecido, use-o. Se não, procure o `.md` mais recentemente modificado no diretório de trabalho atual.
 
 **Objetivo:** fechar o ciclo da aula — corrigir escrita, avaliar respostas, arrematar o arquivo.
 
@@ -150,7 +154,7 @@ Se um caminho de arquivo for fornecido, use-o. Se não, procure o arquivo `.md` 
 
 ## Observações gerais
 
-- As tags `#disciplina` e `#prof/nome` no corpo são obrigatórias — YAML é opcional
+- As tags `#disciplina` e `#ProfNome` no corpo são obrigatórias — YAML é opcional
 - Não crie arquivos de planejamento nem documentos intermediários — trabalhe direto no arquivo final
 - Seja conciso nas avaliações: o aluno está revisando, não lendo um ensaio
-- A pasta `.fontes/` é oculta por ponto — não precisa aparecer nas notas, só serve de arquivo das fontes originais
+- A pasta `.fontes/` é oculta por ponto — não precisa aparecer nas notas, só arquiva as fontes originais
