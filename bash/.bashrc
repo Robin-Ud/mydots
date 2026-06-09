@@ -108,6 +108,91 @@ y() {
     rm -f -- "$tmp"
 }
 
+# bk — salva alias de cd para o diretório atual
+bk() {
+    local name="$1"
+    if [ -z "$name" ]; then
+        echo "Uso: bk <nome>"
+        return 1
+    fi
+    local path
+    path="$(pwd)"
+    local entry="alias ${name}='cd \"${path}\"'  # bookmark"
+    if grep -q "^alias ${name}=.*# bookmark" ~/.bashrc; then
+        sed -i "s|^alias ${name}=.*# bookmark|${entry}|" ~/.bashrc
+        echo "Atualizado: ${name} → ${path}"
+    else
+        echo "${entry}" >> ~/.bashrc
+        echo "Salvo: ${name} → ${path}"
+    fi
+    eval "alias ${name}='cd \"${path}\"'"
+}
+
+# bks — lista todos os bookmarks salvos
+bks() {
+    grep "# bookmark$" ~/.bashrc | sed "s/alias //;s/='cd.*# bookmark//" \
+        | while IFS= read -r name; do
+            local dest
+            dest=$(grep "^alias ${name}=.*# bookmark" ~/.bashrc \
+                | sed "s/.*='cd \"//;s/\"'.*//")
+            printf "  %-20s %s\n" "$name" "$dest"
+          done
+}
+
+# unbk — remove um bookmark pelo nome
+unbk() {
+    local name="$1"
+    if [ -z "$name" ]; then
+        echo "Uso: unbk <nome>"
+        return 1
+    fi
+    if grep -q "^alias ${name}=.*# bookmark" ~/.bashrc; then
+        sed -i "/^alias ${name}=.*# bookmark/d" ~/.bashrc
+        unalias "$name" 2>/dev/null
+        echo "Removido: ${name}"
+    else
+        echo "Bookmark não encontrado: ${name}"
+        return 1
+    fi
+}
+
+# bashrc-help — mostra todas as funções e aliases customizados
+bashrc-help() {
+    echo ""
+    echo "  ALIASES"
+    echo "  :q              sair do terminal (estilo vim)"
+    echo "  code            abre VS Code na pasta atual"
+    echo ""
+    echo "  FUNÇÕES"
+    echo "  hq              abre HQ (pdf/cbr/cbz) via fzf + YACReader"
+    echo "  y               abre yazi e navega até a pasta escolhida"
+    echo "  facul           vai pro semestre mais recente do vault Obsidian"
+    echo "  verificar_uptime  avisa se o sistema está ligado há muito tempo"
+    echo ""
+    echo "  BOOKMARKS"
+    echo "  bk <nome>       salva alias para a pasta atual"
+    echo "  bks             lista todos os bookmarks"
+    echo "  unbk <nome>     remove um bookmark"
+    echo ""
+    if grep -q "# bookmark$" ~/.bashrc; then
+        echo "  bookmarks ativos:"
+        bks
+        echo ""
+    fi
+}
+
+# facul — vai pro semestre mais recente do vault Obsidian
+facul() {
+    local base="$HOME/obsidian/5 facul"
+    local dest
+    dest=$(find "$base" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1)
+    if [ -z "$dest" ]; then
+        echo "Nenhum semestre encontrado em: $base"
+        return 1
+    fi
+    cd "$dest" && echo "→ $dest"
+}
+
 # ===========================================================
 # 4. INICIALIZAÇÃO — roda ao abrir cada terminal
 # ===========================================================
@@ -122,3 +207,4 @@ eval "$(starship init bash)"
 . "$HOME/.atuin/bin/env"
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 eval "$(atuin init bash)"
+alias prova='cd "/home/rud/obsidian/5 facul/5 semestre/5.1 fisica do ambiente/p3"'  # bookmark
