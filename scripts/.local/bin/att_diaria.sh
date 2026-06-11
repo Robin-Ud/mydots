@@ -19,6 +19,11 @@ if [ "$(cat "$ARQUIVO_CONTROLE" 2>/dev/null)" == "$(date +%F)" ]; then
     exit 0
 fi
 
+if ! ping -c 1 -W 2 8.8.8.8 &>/dev/null; then
+    kill -9 $PPID
+    exit 0
+fi
+
 echo "🔍 Buscando atualizações..."
 
 if sudo dnf update -y --refresh; then
