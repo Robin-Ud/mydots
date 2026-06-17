@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Show a wofi menu to pick the default PulseAudio/PipeWire sink.
+
+declare -A sink_map
+
+while IFS= read -r line; do
+    if [[ "$line" =~ ^Nome:\ (.+)$ ]]; then
+        sink_name="${BASH_REMATCH[1]}"
+    elif [[ "$line" =~ ^Descrição:\ (.+)$ ]]; then
+        sink_desc="${BASH_REMATCH[1]}"
+        sink_map["$sink_desc"]="$sink_name"
+    fi
+done < <(pactl list sinks | grep -E "^\s*(Nome|Descrição):" | sed 's/^\s*//')
+
+if [[ ${#sink_map[@]} -eq 0 ]]; then
+    notify-send "Audio" "Nenhum dispositivo encontrado"
+    exit 1
+fi
+
+current_sink=$(pactl get-default-sink)
+
+menu_items=""
+for desc in "${!sink_map[@]}"; do
+    name="${sink_map[$desc]}"
+    if [[ "$name" == "$current_sink" ]]; then
+        menu_items+="✔ $desc\n"
+    else
+        menu_items+="  $desc\n"
+    fi
+done
+
+chosen=$(printf "%b" "$menu_items" | wofi --dmenu --prompt "Saída de áudio" --insensitive --width 500)
+[[ -z "$chosen" ]] && exit 0
+
+chosen_desc="${chosen#✔ }"
+chosen_desc="${chosen_desc#  }"
+
+chosen_sink="${sink_map[$chosen_desc]}"
+[[ -z "$chosen_sink" ]] && exit 1
+
+pactl set-default-sink "$chosen_sink"
+
+# Move all currently playing streams to the new sink
+while IFS= read -r input_idx; do
+    pactl move-sink-input "$input_idx" "$chosen_sink"
+done < <(pactl list short sink-inputs | awk '{print $1}')
+
+notify-send "Áudio" "Saída: $chosen_desc"
