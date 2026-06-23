@@ -14,6 +14,8 @@ vim.opt.swapfile       = false     -- Sem arquivo .swp poluindo a pasta
 vim.opt.smartindent    = false     -- Deixa o LSP cuidar da indentação
 vim.opt.cindent        = false
 vim.opt.indentexpr     = ""
+vim.opt.linebreak      = true      -- Quebra linha visual no espaço, nunca no meio da palavra
+vim.opt.breakindent    = true      -- Mantém a indentação nas linhas quebradas
 
 vim.g.mapleader = " "              -- Espaço como tecla líder (ex: <leader>w = espaço + w)
 
@@ -129,10 +131,12 @@ require("lazy").setup({
                     ['<S-Tab>']   = cmp.mapping.select_prev_item(),
                 }),
                 sources = cmp.config.sources({
-                    { name = 'nvim_lsp' },  -- Prioridade 1: sugestões do LSP
-                    { name = 'luasnip' },   -- Prioridade 2: snippets
+                    { name = 'nvim_lsp', max_item_count = 15 },  -- Prioridade 1: sugestões do LSP
+                    { name = 'luasnip', max_item_count = 5 },    -- Prioridade 2: snippets
                 }, {
-                    { name = 'buffer' },    -- Fallback: palavras do buffer atual
+                    -- Fallback: palavras do buffer atual. keyword_length alto e max_item_count
+                    -- baixo evitam que a lista fique cavalar em arquivos de prosa (.md, etc.)
+                    { name = 'buffer', keyword_length = 4, max_item_count = 5 },
                 })
             })
         end
