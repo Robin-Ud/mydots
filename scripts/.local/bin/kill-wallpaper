@@ -3,9 +3,22 @@
 
 WALLPAPER_DIR="$HOME/Imagens/wallpapers"
 STATE="$HOME/.local/share/hypr-wallpaper-idx"
+ORDER_FILE="$HOME/.local/share/hypr-wallpaper-order"
+LOCK="$HOME/.local/share/hypr-wallpaper.lock"
 
-mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+# Mesmo lock usado por next-wallpaper/set-wallpaper
+exec 9>"$LOCK"
+flock 9
+
+# Ordem embaralhada e persistida da fila (compartilhada entre os scripts).
+mapfile -t current_files < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
     \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort -V)
+if [[ -f "$ORDER_FILE" ]] && [[ "$(printf '%s\n' "${current_files[@]}" | sort)" == "$(sort "$ORDER_FILE")" ]]; then
+    mapfile -t images < "$ORDER_FILE"
+else
+    mapfile -t images < <(printf '%s\n' "${current_files[@]}" | shuf)
+    printf '%s\n' "${images[@]}" > "$ORDER_FILE"
+fi
 
 total=${#images[@]}
 [[ $total -le 1 ]] && {
@@ -27,9 +40,15 @@ BLACKLIST="$HOME/.local/share/dji-sync/deleted.txt"
 mkdir -p "$(dirname "$BLACKLIST")"
 basename "$current" >> "$BLACKLIST"
 
-# Recalcula com a lista atualizada (um item a menos)
-mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
-    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort -V)
+# Remove a imagem deletada da ordem persistida, preservando o embaralhamento
+# do restante (em vez de reordenar tudo de novo)
+new_images=()
+for img in "${images[@]}"; do
+    [[ "$img" == "$current" ]] && continue
+    new_images+=("$img")
+done
+images=("${new_images[@]}")
+printf '%s\n' "${images[@]}" > "$ORDER_FILE"
 
 new_total=${#images[@]}
 next_idx=$(( idx % new_total ))

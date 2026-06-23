@@ -9,10 +9,26 @@ WALLPAPER_DIR="$HOME/Imagens/wallpapers"
 
 # Mesmo arquivo de índice usado pelo set-wallpaper (compartilham a fila)
 STATE="$HOME/.local/share/hypr-wallpaper-idx"
+ORDER_FILE="$HOME/.local/share/hypr-wallpaper-order"
+LOCK="$HOME/.local/share/hypr-wallpaper.lock"
 
-# Coleta imagens em ordem
-mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+# Serializa contra next-wallpaper/kill-wallpaper/set-wallpaper: sem isso,
+# apertar o atalho várias vezes rápido sobe processos concorrentes que
+# racem no STATE e nas chamadas hyprctl, deixando o monitor sem wallpaper.
+exec 9>"$LOCK"
+flock 9
+
+# Ordem embaralhada e persistida da fila (compartilhada entre os scripts).
+# Só reembaralha quando o conjunto de arquivos da pasta muda — reembaralhar
+# a cada chamada faria o índice compartilhado apontar para imagens diferentes.
+mapfile -t current_files < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
     \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort -V)
+if [[ -f "$ORDER_FILE" ]] && [[ "$(printf '%s\n' "${current_files[@]}" | sort)" == "$(sort "$ORDER_FILE")" ]]; then
+    mapfile -t images < "$ORDER_FILE"
+else
+    mapfile -t images < <(printf '%s\n' "${current_files[@]}" | shuf)
+    printf '%s\n' "${images[@]}" > "$ORDER_FILE"
+fi
 
 total=${#images[@]}
 [[ $total -eq 0 ]] && exit 1

@@ -13,10 +13,24 @@ CONF="$HOME/.config/hypr/hyprpaper.conf"
 
 # Arquivo que guarda o índice do wallpaper atual entre sessões
 STATE="$HOME/.local/share/hypr-wallpaper-idx"
+ORDER_FILE="$HOME/.local/share/hypr-wallpaper-order"
+LOCK="$HOME/.local/share/hypr-wallpaper.lock"
 
-# Coleta todas as imagens em ordem (sort -V respeita numeração: 1, 2, 10, ...)
-mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+# Mesmo lock usado por next-wallpaper/kill-wallpaper, para não racear com
+# uma troca manual disparada durante o boot
+exec 9>"$LOCK"
+flock 9
+
+# Ordem embaralhada e persistida da fila (compartilhada entre os scripts).
+# Só reembaralha quando o conjunto de arquivos da pasta muda.
+mapfile -t current_files < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
     \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort -V)
+if [[ -f "$ORDER_FILE" ]] && [[ "$(printf '%s\n' "${current_files[@]}" | sort)" == "$(sort "$ORDER_FILE")" ]]; then
+    mapfile -t images < "$ORDER_FILE"
+else
+    mapfile -t images < <(printf '%s\n' "${current_files[@]}" | shuf)
+    printf '%s\n' "${images[@]}" > "$ORDER_FILE"
+fi
 
 total=${#images[@]}
 [[ $total -eq 0 ]] && { echo "Nenhuma imagem em $WALLPAPER_DIR" >&2; exit 1; }
@@ -38,7 +52,11 @@ img2="${images[$(( (idx + 1) % total ))]}"
     printf 'wallpaper = HDMI-A-1,%s\n' "$img2"
 } > "$CONF"
 
-# Reinicia o hyprpaper para aplicar a nova configuração
+# Reinicia o hyprpaper para aplicar a nova configuração.
+# "9>&-" fecha o fd do lock para esse processo: como o hyprpaper é um daemon
+# que continua rodando, herdar o fd mantém o flock preso pra sempre, travando
+# todo next-wallpaper/kill-wallpaper futuro.
 pkill -x hyprpaper 2>/dev/null
 sleep 0.2
-hyprpaper &
+hyprpaper 9>&- &
+disown
