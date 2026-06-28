@@ -134,9 +134,10 @@ require("lazy").setup({
                     { name = 'nvim_lsp', max_item_count = 15 },  -- Prioridade 1: sugestões do LSP
                     { name = 'luasnip', max_item_count = 5 },    -- Prioridade 2: snippets
                 }, {
-                    -- Fallback: palavras do buffer atual. keyword_length alto e max_item_count
-                    -- baixo evitam que a lista fique cavalar em arquivos de prosa (.md, etc.)
-                    { name = 'buffer', keyword_length = 4, max_item_count = 5 },
+                    -- Fallback: palavras do buffer atual. keyword_length controla a partir
+                    -- de quantas letras a sugestão aparece (3, não só com 4+), e max_item_count
+                    -- baixo evita que a lista fique cavalar em arquivos de prosa (.md, etc.)
+                    { name = 'buffer', keyword_length = 3, max_item_count = 5 },
                 })
             })
         end
