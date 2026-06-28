@@ -37,6 +37,7 @@ fi
 
 alias :q='exit'        # Sair como no vim
 alias code='code .'    # Abre o VS Code na pasta atual
+alias colheita='~/deving/colheita/colheita.sh'   # Fazenda viva: seus hábitos no terminal
 
 # ===========================================================
 # 3. FUNÇÕES
