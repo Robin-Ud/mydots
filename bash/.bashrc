@@ -112,12 +112,17 @@ y() {
 # bk — sistema de bookmarks (bk, bks, bks verify, unbk, bk --help)
 [[ -f ~/.config/bk/bk.sh ]] && source ~/.config/bk/bk.sh
 
+# tk — notas/aprovação das provas (tk, tks, tk passei, tk -h)
+[[ -f ~/deving/colheita/tk.sh ]] && source ~/deving/colheita/tk.sh
+
 # bashrc-help — mostra todas as funções e aliases customizados
 bashrc-help() {
     echo ""
     echo "  ALIASES"
     echo "  :q              sair do terminal (estilo vim)"
     echo "  code            abre VS Code na pasta atual"
+    echo "  colheita        roça do semestre: hábitos, provas e boletim no terminal"
+    echo "  tk / tks        lançar notas das provas e ver se passou (tk -h)"
     echo ""
     echo "  FUNÇÕES"
     echo "  hq              abre HQ (pdf/cbr/cbz) via fzf + YACReader"
