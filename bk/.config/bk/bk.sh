@@ -5,6 +5,19 @@
 
 _BK_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/bk/bookmarks"
 
+# compat: zsh não tem `type -t`; usa `whence -w` e traduz pro mesmo vocabulário do bash
+_bk_type() {
+    if [[ -n "$ZSH_VERSION" ]]; then
+        local w=$(whence -w "$1" 2>/dev/null)
+        w=${w#*: }
+        [[ "$w" == "command" ]] && w=file
+        [[ "$w" == "none" ]] && w=""
+        echo "$w"
+    else
+        type -t "$1" 2>/dev/null
+    fi
+}
+
 _bk_init() {
     mkdir -p "$(dirname "$_BK_FILE")"
     [[ -f "$_BK_FILE" ]] || touch "$_BK_FILE"
@@ -13,14 +26,14 @@ _bk_init() {
 # Carregado ao sourcear: exporta variáveis e define funções -x
 _bk_load() {
     _bk_init
-    while IFS=$'\t' read -r name path flags; do
+    while IFS=$'\t' read -r name bkpath flags; do
         [[ -z "$name" ]] && continue
         if [[ ! "$name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
             echo "bk: nome inválido '$name' no arquivo de bookmarks — use letras, números e _. Ignorando essa linha (use 'unbk' ou edite ~/.local/share/bk/bookmarks)." >&2
             continue
         fi
         unalias "$name" 2>/dev/null
-        export "${name}=${path}"
+        export "${name}=${bkpath}"
         if [[ "$flags" == *x* ]]; then
             eval "${name}() { if [ \$# -eq 0 ]; then cd \"\$${name}\"; elif [ \"\$1\" = cld ]; then cd \"\$${name}\" && claude; else \"\$@\" \"\$${name}\"; fi; }"
         fi
@@ -49,7 +62,7 @@ bk() {
 
     if (( dangerous )); then
         local existing_type
-        existing_type=$(type -t "$name" 2>/dev/null)
+        existing_type=$(_bk_type "$name")
         case "$existing_type" in
             builtin|keyword|file)
                 echo "bk: conflito — '$name' é um $existing_type do sistema. Use bk sem -x para variável."
@@ -64,8 +77,8 @@ bk() {
         esac
     fi
 
-    local path flags_val=""
-    path="$(pwd)"
+    local bkpath flags_val=""
+    bkpath="$(pwd)"
     (( dangerous )) && flags_val="x"
 
     _bk_init
@@ -74,16 +87,16 @@ bk() {
         existed=1
         grep -v "^${name}"$'\t' "$_BK_FILE" > "${_BK_FILE}.tmp" && mv "${_BK_FILE}.tmp" "$_BK_FILE"
     fi
-    printf '%s\t%s\t%s\n' "$name" "$path" "$flags_val" >> "$_BK_FILE"
+    printf '%s\t%s\t%s\n' "$name" "$bkpath" "$flags_val" >> "$_BK_FILE"
 
-    export "${name}=${path}"
+    export "${name}=${bkpath}"
     if (( dangerous )); then
         eval "${name}() { if [ \$# -eq 0 ]; then cd \"\$${name}\"; elif [ \"\$1\" = cld ]; then cd \"\$${name}\" && claude; else \"\$@\" \"\$${name}\"; fi; }"
     else
         unset -f "$name" 2>/dev/null
     fi
 
-    (( existed )) && echo "Atualizado: \$$name → $path" || echo "Salvo: \$$name → $path"
+    (( existed )) && echo "Atualizado: \$$name → $bkpath" || echo "Salvo: \$$name → $bkpath"
 }
 
 bks() {
@@ -96,28 +109,28 @@ bks() {
         echo "Nenhum bookmark salvo."
         return 0
     fi
-    while IFS=$'\t' read -r name path flags; do
+    while IFS=$'\t' read -r name bkpath flags; do
         [[ -z "$name" ]] && continue
         local marker="    "
         [[ "$flags" == *x* ]] && marker="[-x]"
-        printf "  %s \$%-18s %s\n" "$marker" "$name" "${path/#$HOME/\~}"
+        printf "  %s \$%-18s %s\n" "$marker" "$name" "${bkpath/#$HOME/\~}"
     done < "$_BK_FILE"
 }
 
 _bks_verify() {
     _bk_init
     local found=0
-    while IFS=$'\t' read -r name path flags; do
+    while IFS=$'\t' read -r name bkpath flags; do
         [[ -z "$name" || "$flags" != *x* ]] && continue
         local existing_type
-        existing_type=$(type -t "$name" 2>/dev/null)
+        existing_type=$(_bk_type "$name")
         [[ "$existing_type" != "file" ]] && continue
 
         found=1
         local cmd_path
         cmd_path=$(command -v "$name")
         printf '\n  [!] \033[1m%s\033[0m — conflito com comando: %s\n' "$name" "$cmd_path"
-        printf '      bookmark aponta para: %s\n' "$path"
+        printf '      bookmark aponta para: %s\n' "$bkpath"
         printf '      [d] excluir  [r] renomear  [s] pular: '
         read -r choice </dev/tty
         case "$choice" in
@@ -133,9 +146,9 @@ _bks_verify() {
                     echo "      Nome inválido, pulando."
                 else
                     grep -v "^${name}"$'\t' "$_BK_FILE" > "${_BK_FILE}.tmp" && mv "${_BK_FILE}.tmp" "$_BK_FILE"
-                    printf '%s\t%s\t%s\n' "$new_name" "$path" "$flags" >> "$_BK_FILE"
+                    printf '%s\t%s\t%s\n' "$new_name" "$bkpath" "$flags" >> "$_BK_FILE"
                     unset "$name"; unset -f "$name" 2>/dev/null
-                    export "${new_name}=${path}"
+                    export "${new_name}=${bkpath}"
                     eval "${new_name}() { if [ \$# -eq 0 ]; then cd \"\$${new_name}\"; elif [ \"\$1\" = cld ]; then cd \"\$${new_name}\" && claude; else \"\$@\" \"\$${new_name}\"; fi; }"
                     echo "      Renomeado: $name → $new_name"
                 fi
