@@ -31,6 +31,11 @@ if [ -d ~/.bashrc.d ]; then
     unset rc
 fi
 
+# seta uma config padrão pra fzf
+export FZF_DEFAULT_OPTS="--preview 'bat --color=always {}'"
+
+# key-bindings do fzf (Ctrl+R histórico, Ctrl+T arquivos, Alt+C diretórios)
+source /usr/share/fzf/shell/key-bindings.bash
 # ===========================================================
 # 2. ALIASES — atalhos de comandos
 # ===========================================================
@@ -156,7 +161,5 @@ eval "$(starship init bash)"
 # Ferramentas instaladas via Rust/Cargo
 . "$HOME/.cargo/env"
 
-# Atuin: histórico de comandos melhorado (com busca e sync)
-. "$HOME/.atuin/bin/env"
-[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
-eval "$(atuin init bash)"
+# opencode
+export PATH=/home/rud/.opencode/bin:$PATH
