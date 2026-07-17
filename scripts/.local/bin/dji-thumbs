@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+# dji-thumbs — Gera thumbnails para vídeos DJI (HEVC) sem decodificar o vídeo.
+#
+# Vídeos DJI trazem uma foto de capa (MJPEG) embutida como "attached pic" no
+# próprio .mp4. O Fedora não tem decoder de H.265 instalado (patentes), então
+# GStreamer/ffmpeg não conseguem gerar frame nenhum — mas dá pra extrair essa
+# capa com um simples remux (sem decodificar nada) e usá-la como thumbnail,
+# escrevendo direto no cache padrão freedesktop que Thunar/tumbler já leem.
+
+import hashlib
+import json
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
+import zlib
+from pathlib import Path
+from urllib.parse import quote
+
+VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv"}
+CACHE_SIZES = {"normal": 128, "large": 256}
+CACHE_DIR = Path.home() / ".cache" / "thumbnails"
+
+
+def find_cover_stream(video: Path) -> int | None:
+    proc = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_streams", "-print_format", "json", str(video)],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        return None
+    streams = json.loads(proc.stdout).get("streams", [])
+    for s in streams:
+        if s.get("codec_name") == "mjpeg" and s.get("disposition", {}).get("attached_pic"):
+            return s["index"]
+    return None
+
+
+def extract_cover(video: Path, stream_index: int, out_jpg: Path) -> bool:
+    proc = subprocess.run(
+        ["ffmpeg", "-y", "-v", "error", "-i", str(video),
+         "-map", f"0:{stream_index}", "-c", "copy", str(out_jpg)],
+        capture_output=True,
+    )
+    return proc.returncode == 0 and out_jpg.exists()
+
+
+def resize_png(src_jpg: Path, out_png: Path, size: int) -> bool:
+    scale = f"scale={size}:{size}:force_original_aspect_ratio=decrease"
+    proc = subprocess.run(
+        ["ffmpeg", "-y", "-v", "error", "-i", str(src_jpg), "-vf", scale, str(out_png)],
+        capture_output=True,
+    )
+    return proc.returncode == 0 and out_png.exists()
+
+
+def png_text_chunk(keyword: bytes, text: bytes) -> bytes:
+    data = keyword + b"\x00" + text
+    chunk = b"tEXt" + data
+    return struct.pack(">I", len(data)) + chunk + struct.pack(">I", zlib.crc32(chunk))
+
+
+def inject_text_chunks(png_path: Path, uri: str, mtime: int, size: int) -> None:
+    raw = png_path.read_bytes()
+    sig, rest = raw[:8], raw[8:]
+
+    ihdr_len = struct.unpack(">I", rest[:4])[0]
+    ihdr_end = 4 + 4 + ihdr_len + 4  # length + type + data + crc
+    ihdr_chunk = rest[:ihdr_end]
+    remainder = rest[ihdr_end:]
+
+    extra = (
+        png_text_chunk(b"Thumb::URI", uri.encode("utf-8"))
+        + png_text_chunk(b"Thumb::MTime", str(mtime).encode("ascii"))
+        + png_text_chunk(b"Thumb::Size", str(size).encode("ascii"))
+    )
+    png_path.write_bytes(sig + ihdr_chunk + extra + remainder)
+
+
+def read_cached_mtime(png_path: Path) -> int | None:
+    try:
+        raw = png_path.read_bytes()
+    except OSError:
+        return None
+    pos = 8
+    while pos + 8 <= len(raw):
+        length = struct.unpack(">I", raw[pos:pos + 4])[0]
+        ctype = raw[pos + 4:pos + 8]
+        data = raw[pos + 8:pos + 8 + length]
+        if ctype == b"tEXt" and data.startswith(b"Thumb::MTime\x00"):
+            try:
+                return int(data.split(b"\x00", 1)[1])
+            except ValueError:
+                return None
+        if ctype == b"IEND":
+            break
+        pos += 8 + length + 4
+    return None
+
+
+def cache_path(uri: str, variant: str) -> Path:
+    digest = hashlib.md5(uri.encode("utf-8")).hexdigest()
+    return CACHE_DIR / variant / f"{digest}.png"
+
+
+def process(video: Path) -> str:
+    uri = "file://" + quote(str(video.resolve()), safe="/~")
+    mtime = int(video.stat().st_mtime)
+
+    targets = {variant: cache_path(uri, variant) for variant in CACHE_SIZES}
+    if all(read_cached_mtime(p) == mtime for p in targets.values() if p.exists()) and \
+       all(p.exists() for p in targets.values()):
+        return "cache-ok"
+
+    stream_index = find_cover_stream(video)
+    if stream_index is None:
+        return "sem-capa-embutida"
+
+    with tempfile.TemporaryDirectory() as tmp:
+        cover_jpg = Path(tmp) / "cover.jpg"
+        if not extract_cover(video, stream_index, cover_jpg):
+            return "erro-extrair"
+
+        for variant, size in CACHE_SIZES.items():
+            dest = targets[variant]
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            tmp_png = Path(tmp) / f"{variant}.png"
+            if not resize_png(cover_jpg, tmp_png, size):
+                return "erro-resize"
+            inject_text_chunks(tmp_png, uri, mtime, video.stat().st_size)
+            shutil.move(str(tmp_png), str(dest))
+
+    return "ok"
+
+
+def main() -> int:
+    target_dir = Path(sys.argv[1]).expanduser() if len(sys.argv) > 1 else Path.home() / "Imagens" / "videos_drone"
+    if not target_dir.is_dir():
+        print(f"ERRO: pasta nao encontrada: {target_dir}", file=sys.stderr)
+        return 1
+
+    videos = sorted(p for p in target_dir.iterdir() if p.suffix.lower() in VIDEO_EXTS)
+    if not videos:
+        print("Nenhum video encontrado.")
+        return 0
+
+    counts: dict[str, int] = {}
+    for video in videos:
+        result = process(video)
+        counts[result] = counts.get(result, 0) + 1
+        if result not in ("cache-ok",):
+            print(f"  {video.name}: {result}")
+
+    print("----------------------------------------")
+    for status, n in sorted(counts.items()):
+        print(f"  {status:20s} {n}")
+    print("----------------------------------------")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
