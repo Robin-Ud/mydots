@@ -33,7 +33,7 @@ export FZF_DEFAULT_OPTS="--preview 'bat --color=always {}'"
 # 2. ALIASES
 # ===========================================================
 
-alias nvim='nvim $(fzf)'
+alias pt='pytest -xv test.py'
 alias :q='exit'
 alias code='code .'
 alias colheita='~/deving/colheita/colheita.sh'
