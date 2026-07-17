@@ -115,6 +115,11 @@ while IFS= read -r filename; do
     fi
 done < <(gio list "$MTP_PATH/")
 
+if (( copied_videos > 0 )); then
+    echo "Gerando thumbnails dos videos novos..."
+    dji-thumbs "$VIDEO_DIR"
+fi
+
 echo ""
 echo "----------------------------------------"
 echo "  Fotos importadas : $copied_photos"
