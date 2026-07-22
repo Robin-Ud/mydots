@@ -8,6 +8,35 @@
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME=""   # vazio: quem cuida do prompt é o starship (ver final do arquivo)
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-completions fzf)
+
+# >>> recente ---------------------------------------------------------------
+# Autosuggestion. O padrão do plugin é a estratégia `history`, que é cega ao
+# diretório: oferece comandos antigos (arquivo de outra pasta, subdir que não
+# existe aqui). `completion` usa o motor real de completion e só sugere o que
+# existe de fato; `recente` (nossa, em autosuggest-recente.zsh) vai além e
+# escolhe o candidato ALTERADO mais recentemente em vez do primeiro em ordem
+# alfabética, olhando o conteúdo das pastas.
+#
+# EXPERIMENTAL (19/07). Para desmontar, do mais leve ao mais definitivo:
+#   1. `recente-off`                          — desliga agora, sem reabrir nada
+#   2. ZSH_AUTOSUGGEST_STRATEGY=(completion)  — volta ao comportamento anterior
+#   3. apagar deste marcador até o `# <<< recente`, mais o arquivo
+# `recente-status` mostra a configuração em vigor; `recente-clear` limpa o cache.
+source ~/.mydots/zsh/autosuggest-recente.zsh
+ZSH_AUTOSUGGEST_STRATEGY=(recente completion)
+
+# Gate: não sugere enquanto a palavra ATUAL estiver vazia (buffer vazio ou
+# terminando em espaço). A partir do 1º caractere digitado, sugere.
+# Isso evita a sugestão gratuita logo após `cd ` / `nvim `, que era o barulho.
+# Vale só para a estratégia `completion`; a `recente` tem o seu próprio
+# (ZSH_RECENTE_MIN_CHARS), mantido em sincronia.
+# Para exigir 2+ caracteres: '(|*[[:space:]])[^[:space:]](#c0,1)'
+ZSH_AUTOSUGGEST_COMPLETION_IGNORE='*[[:space:]]|'
+
+# Ambas as estratégias rodam a cada tecla; async evita engasgo na digitação.
+ZSH_AUTOSUGGEST_USE_ASYNC=1
+# <<< recente ---------------------------------------------------------------
+
 source "$ZSH/oh-my-zsh.sh"
 # ↑ o plugin `fzf` do OMZ já cuida do key-bindings (Ctrl+R/Ctrl+T/Alt+C) —
 #   por isso NÃO sourceamos /usr/share/fzf/shell/key-bindings.zsh manualmente
