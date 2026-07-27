@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Cheatsheet de keybinds do Hyprland — exibe no rofi."""
 
+import json
 import subprocess
 
 # Formato: (seção, combo, descrição)
@@ -33,7 +34,6 @@ KEYBINDS = [
     ("Screenshot",   "Ctrl + Shift + PrtSc",       "Selecionar área → ~/Imagens"),
 
     # ── Navegação de foco ─────────────────────────────────────────────
-    ("Foco",         "Super + H / J / K / L",      "Mover foco (vim)"),
     ("Foco",         "Super + ← ↓ ↑ →",           "Mover foco (setas)"),
 
     # ── Mover janelas ─────────────────────────────────────────────────
@@ -42,7 +42,6 @@ KEYBINDS = [
     ("Janelas",      "Super + F",                  "Tela cheia"),
     ("Janelas",      "Super + Shift + Space",       "Alternar flutuante"),
     ("Janelas",      "Super + P",                  "Pin (sempre visível)"),
-    ("Janelas",      "Super + E",                  "Alternar split H/V"),
     ("Janelas",      "Super + R  →  H/J/K/L",      "Modo resize (Esc para sair)"),
     ("Janelas",      "Super + drag LClick",         "Mover janela com mouse"),
     ("Janelas",      "Super + drag RClick",         "Redimensionar com mouse"),
@@ -64,6 +63,50 @@ KEYBINDS = [
     ("Mídia",        "Bright+ / Bright-",          "Brilho +10% / -10%"),
 ]
 
+# Binds que mudam conforme o layout ativo (hyprland-<layout>.conf)
+LAYOUT_KEYBINDS = {
+    "dwindle": [
+        ("Super + H / J / K / L",    "Mover foco (vim)"),
+        ("Super + Tab",              "Focar próxima janela"),
+        ("Super + E",                "Alternar split H/V"),
+        ("Super + Y",                "Pseudotile da janela"),
+    ],
+    "master": [
+        ("Super + H / J / K / L",    "Mover foco (vim)"),
+        ("Super + M",                "Trocar janela com o master"),
+        ("Super + U",                "Focar o master"),
+        ("Super + Tab / Shift+Tab",  "Ciclar pilha (próx / ant)"),
+        ("Super + , / .",            "Add / remover master"),
+        ("Super + E",                "Girar orientação"),
+        ("Super + Shift + M",        "Ciclo esquerda/centro/direita"),
+        ("Super + - / =",            "Encolher / crescer master"),
+    ],
+    "scrolling": [
+        ("Super + H / L",            "Coluna anterior / próxima"),
+        ("Super + J / K",            "Foco dentro da coluna"),
+        ("Super + M",                "Janela vira coluna própria"),
+        ("Super + Shift + M",        "Juntar / separar da coluna vizinha"),
+        ("Super + E / Shift + E",    "Fit visíveis / todas"),
+        ("Super + , / .",            "Trocar coluna ← / →"),
+        ("Super + Tab",              "Ciclar larguras de coluna"),
+        ("Super + - / =",            "Encolher / crescer coluna"),
+    ],
+    "monocle": [
+        ("Super + Tab / Shift+Tab",  "Próxima / anterior janela"),
+        ("Super + J/L  ·  K/H",      "Próxima  ·  anterior janela"),
+    ],
+}
+
+def current_layout():
+    try:
+        out = subprocess.run(
+            ["hyprctl", "-j", "getoption", "general:layout"],
+            capture_output=True, text=True, timeout=2,
+        ).stdout
+        return json.loads(out).get("str", "")
+    except Exception:
+        return ""
+
 def build_lines(entries):
     lines = []
     current_section = None
@@ -78,7 +121,15 @@ def build_lines(entries):
     return "\n".join(lines)
 
 def main():
-    text = build_lines(KEYBINDS)
+    layout = current_layout()
+    entries = list(KEYBINDS)
+    if layout in LAYOUT_KEYBINDS:
+        extra = [(f"Layout: {layout}", combo, desc)
+                 for combo, desc in LAYOUT_KEYBINDS[layout]]
+        # Insere logo depois da seção "Foco", junto da navegação
+        idx = max(i for i, e in enumerate(entries) if e[0] == "Foco") + 1
+        entries[idx:idx] = extra
+    text = build_lines(entries)
     subprocess.run(
         [
             "rofi", "-dmenu", "-p", "⌨  Keybinds", "-i",
