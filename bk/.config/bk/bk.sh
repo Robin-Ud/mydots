@@ -113,7 +113,7 @@ bks() {
         [[ -z "$name" ]] && continue
         local marker="    "
         [[ "$flags" == *x* ]] && marker="[-x]"
-        printf "  %s \$%-18s %s\n" "$marker" "$name" "${bkpath/#$HOME/\~}"
+        printf "  %s $%-18s %s\n" "$marker" "$name" "${bkpath/#$HOME/\~}"
     done < "$_BK_FILE"
 }
 
