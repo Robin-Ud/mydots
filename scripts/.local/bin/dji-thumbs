@@ -5,7 +5,7 @@
 # próprio .mp4. O Fedora não tem decoder de H.265 instalado (patentes), então
 # GStreamer/ffmpeg não conseguem gerar frame nenhum — mas dá pra extrair essa
 # capa com um simples remux (sem decodificar nada) e usá-la como thumbnail,
-# escrevendo direto no cache padrão freedesktop que Thunar/tumbler já leem.
+# escrevendo direto no cache padrão freedesktop que Dolphin/tumbler já leem.
 
 import hashlib
 import json
