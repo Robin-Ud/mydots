@@ -13,7 +13,8 @@ KEYBINDS = [
     ("Apps",         "Super + O",                  "Obsidian (workspace atual)"),
     ("Apps",         "Super + X",                  "Xournal++"),
     ("Apps",         "Super + G",                  "QGIS"),
-    ("Apps",         "Shift + Enter",              "Gerenciador de arquivos (yazi)"),
+    ("Apps",         "Super + A",                  "Anki (workspace atual)"),
+    ("Apps",         "Ctrl + Enter",               "Gerenciador de arquivos (dolphin)"),
 
     # ── Sistema ───────────────────────────────────────────────────────
     ("Sistema",      "Super + Q",                  "Fechar janela"),
@@ -53,8 +54,8 @@ KEYBINDS = [
     ("Workspaces",   "Super + Scroll ↓↑",          "Workspace próx. / ant."),
 
     # ── Scratchpad ───────────────────────────────────────────────────
-    ("Scratchpad",   "Super + -",                  "Mostrar / esconder Obsidian"),
-    ("Scratchpad",   "Super + Shift + -",          "Enviar janela para scratchpad"),
+    ("Scratchpad",   "Super + S",                  "Mostrar / esconder scratchpad"),
+    ("Scratchpad",   "Super + Shift + S",          "Enviar janela para scratchpad"),
 
     # ── Mídia ────────────────────────────────────────────────────────
     ("Mídia",        "Vol+ / Vol-",                "Volume +5% / -5%"),

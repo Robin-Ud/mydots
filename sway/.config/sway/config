@@ -6,7 +6,7 @@
 set $mod Mod4
 set $term foot
 set $browser firefox
-set $files thunar
+set $files dolphin
 set $menu rofi -show drun -show-icons
 
 # Comando do Obsidian (Flatpak)
@@ -34,7 +34,7 @@ include '$(/usr/libexec/sway/layered-include "/usr/share/sway/config.d/*.conf" "
 ### 4. Aplicações ###
 bindsym $mod+Return exec $term
 bindsym $mod+Shift+Return exec $files  
-# ^ Mudei o Thunar para Shift+Enter para liberar o 'e'
+# ^ Mudei o Dolphin para Shift+Enter para liberar o 'e'
 bindsym $mod+d exec $menu
 bindsym $mod+n exec $browser
 bindsym $mod+o exec $obsidian_cmd
