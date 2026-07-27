@@ -71,6 +71,16 @@ alias colheita='~/deving/colheita/colheita.sh'
 # 3. FUNÇÕES (idênticas ao .bashrc — zsh entende a mesma sintaxe)
 # ===========================================================
 
+# wiki do Hyprland offline (espelhada por ~/hyprland-wiki-0.51.0/mirror_wiki.py)
+hyprwiki() {
+    local porta=8631
+    if ! curl -s -o /dev/null "http://localhost:$porta/0.51.0/"; then
+        (cd ~/hyprland-wiki-0.51.0 && python3 -m http.server "$porta" &>/dev/null &)
+        sleep 0.5
+    fi
+    xdg-open "http://localhost:$porta/0.51.0/"
+}
+
 verificar_uptime() {
     local DIAS_LIMITE=1
     local HORAS_SONECA=2
