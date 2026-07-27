@@ -48,6 +48,16 @@ alias colheita='~/deving/colheita/colheita.sh'   # Fazenda viva: seus hábitos n
 # 3. FUNÇÕES
 # ===========================================================
 
+# hyprwiki — abre a wiki do Hyprland offline (espelho em ~/hyprland-wiki-0.51.0)
+hyprwiki() {
+    local porta=8631
+    if ! curl -s -o /dev/null "http://localhost:$porta/0.51.0/"; then
+        (cd ~/hyprland-wiki-0.51.0 && python3 -m http.server "$porta" &>/dev/null &)
+        sleep 0.5
+    fi
+    xdg-open "http://localhost:$porta/0.51.0/"
+}
+
 # verificar_uptime — avisa quando o sistema está ligado há muito tempo
 # Útil para lembrar de reiniciar e aplicar atualizações de kernel.
 verificar_uptime() {
