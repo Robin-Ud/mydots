@@ -66,6 +66,8 @@ alias pt='pytest -xv test.py'
 alias :q='exit'
 alias code='code .'
 alias colheita='~/deving/colheita/colheita.sh'
+alias ..='cd ..'
+
 
 # ===========================================================
 # 3. FUNÇÕES (idênticas ao .bashrc — zsh entende a mesma sintaxe)
