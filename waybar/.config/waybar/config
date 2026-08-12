@@ -7,7 +7,7 @@
     // Módulos carregados em cada posição
     "modules-left": ["hyprland/workspaces", "hyprland/window"],
     "modules-center": [], 
-    "modules-right": ["idle_inhibitor", "pulseaudio", "network", "bluetooth", "battery", "clock", "tray"],
+    "modules-right": ["idle_inhibitor", "backlight", "pulseaudio", "network", "bluetooth", "battery", "clock", "tray"],
 
     // --- Configuração dos Módulos ---
 
@@ -29,6 +29,14 @@
         "tooltip": true,
         "tooltip-format-activated": "Modo Apresentação: ATIVADO (Não vai dormir)",
         "tooltip-format-deactivated": "Modo Economia: ATIVADO (Vai dormir)"
+    },
+
+    "backlight": {
+        "format": "{icon} {percent}%",
+        "format-icons": ["", "", "", "", "", "", "", "", ""],
+        "on-scroll-up": "brightnessctl set 5%+",
+        "on-scroll-down": "brightnessctl set 5%-",
+        "tooltip-format": "Brilho: {percent}%"
     },
 
     "clock": {
