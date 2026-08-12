@@ -212,6 +212,21 @@ facul() {
 }
 
 # ===========================================================
+# 3.5 USAGE TRACKING — loga o primeiro token de cada comando digitado
+#     (ver ~/deving/UsageTracker; relatório: `usage-report`)
+# ===========================================================
+
+zmodload zsh/datetime 2>/dev/null
+autoload -Uz add-zsh-hook
+
+_usage_tracker_log() {
+    local dir="$HOME/.local/share/usage-tracker"
+    mkdir -p "$dir"
+    printf '%s\t%s\n' "$EPOCHSECONDS" "${1%% *}" >> "$dir/cmd_log.tsv"
+}
+add-zsh-hook preexec _usage_tracker_log
+
+# ===========================================================
 # 4. INICIALIZAÇÃO — starship por último, pra sobrescrever o prompt do OMZ
 # ===========================================================
 
