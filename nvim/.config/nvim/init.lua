@@ -18,6 +18,7 @@ vim.opt.linebreak      = true      -- Quebra linha visual no espaço, nunca no m
 vim.opt.breakindent    = true      -- Mantém a indentação nas linhas quebradas
 
 vim.g.mapleader = " "              -- Espaço como tecla líder (ex: <leader>w = espaço + w)
+vim.g.maplocalleader = ","         -- Líder local: atalhos de linguagem (R.nvim usa este)
 
 -- ========================================================================== --
 -- 2. ATALHOS CUSTOMIZADOS
@@ -89,15 +90,51 @@ require("lazy").setup({
         lazy = false,
     },
 
+    -- R: abre um console do R num split e manda código do buffer para ele.
+    -- Atalhos (localleader = vírgula):
+    --   ,rf  abre o R      ,rq  fecha o R
+    --   ,l   manda a linha do cursor    ,d  manda a linha e desce
+    --   ,ss  manda a seleção (modo visual)
+    --   ,aa  manda o arquivo inteiro    ,ro  abre o painel de objetos
+    -- O R.nvim compila sozinho o nvimcom no primeiro start — precisa do gcc.
+    {
+        "R-nvim/R.nvim",
+        lazy = false,
+        opts = {
+            R_args         = { "--quiet", "--no-save" },
+            min_editor_width = 72,
+            rconsole_width   = 78,
+            objbr_mappings   = { c = "class", ["<localleader>gg"] = "head({object})" },
+            -- Split vertical: código à esquerda, console do R à direita
+            rconsole_height  = 0,
+            hook = {
+                on_filetype = function()
+                    -- Enter no modo visual manda a seleção para o console
+                    vim.keymap.set("v", "<CR>", "<Plug>RSendSelection",
+                        { buffer = true, desc = "R: mandar seleção" })
+                    -- Enter no modo normal manda a linha e desce
+                    vim.keymap.set("n", "<CR>", "<Plug>RDSendLine",
+                        { buffer = true, desc = "R: mandar linha" })
+                end,
+            },
+        },
+    },
+
     -- Treesitter: parsing real da linguagem para syntax highlighting mais preciso
     {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
+        -- branch fixo em "master": o branch padrão do projeto virou "main",
+        -- que exige Neovim 0.12 (usa vim.list.unique). Aqui roda 0.11.6, e no
+        -- "main" o config abaixo falhava calado — o highlight vinha do syntax
+        -- antigo, não do treesitter. Só reavaliar ao subir para o 0.12.
+        branch = "master",
         config = function()
             local status_ok, configs = pcall(require, "nvim-treesitter.configs")
             if not status_ok then return end
             configs.setup({
-                ensure_installed = { "c", "lua", "vim", "vimdoc", "rust", "python" },
+                ensure_installed = { "c", "lua", "vim", "vimdoc", "rust", "python",
+                                     "r", "markdown", "markdown_inline" },
                 highlight = { enable = true },
             })
         end
@@ -188,6 +225,18 @@ require("mason-lspconfig").setup({
         end,
     },
 })
+
+-- R: o languageserver não vem pelo Mason, é um pacote do CRAN
+-- (Rscript ~/etc/r-setup/pacotes.R instala).
+-- Por isso é configurado à mão, fora dos handlers do mason-lspconfig.
+-- Usa a API nova do nvim 0.11 (vim.lsp.config/enable); o require('lspconfig')
+-- direto está deprecado e imprime aviso na inicialização.
+if vim.fn.executable("R") == 1 then
+    vim.lsp.config('r_language_server', {
+        capabilities = require('cmp_nvim_lsp').default_capabilities(),
+    })
+    vim.lsp.enable('r_language_server')
+end
 
 -- ========================================================================== --
 -- 6. ATALHOS DO LSP
