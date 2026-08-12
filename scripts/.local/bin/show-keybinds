@@ -10,11 +10,12 @@ KEYBINDS = [
     ("Apps",         "Super + Enter",              "Terminal"),
     ("Apps",         "Alt + Enter",                "Navegador"),
     ("Apps",         "Super + D",                  "Launcher de apps"),
-    ("Apps",         "Super + O",                  "Obsidian (workspace atual)"),
+    ("Apps",         "Alt + V",                    "Obsidian (workspace atual)"),
     ("Apps",         "Super + X",                  "Xournal++"),
-    ("Apps",         "Super + G",                  "QGIS"),
-    ("Apps",         "Super + A",                  "Anki (workspace atual)"),
-    ("Apps",         "Ctrl + Enter",               "Gerenciador de arquivos (dolphin)"),
+    ("Apps",         "Alt + G",                    "QGIS"),
+    ("Apps",         "Alt + A",                    "Anki (workspace atual)"),
+    ("Apps",         "Alt + Z",                    "Zotero (workspace atual)"),
+    ("Apps",         "Alt + D",                    "Gerenciador de arquivos (dolphin)"),
 
     # ── Sistema ───────────────────────────────────────────────────────
     ("Sistema",      "Super + Q",                  "Fechar janela"),
