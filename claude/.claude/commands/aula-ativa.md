@@ -1,6 +1,6 @@
 # /aula-ativa
 
-Skill para anotação ativa de aulas com slides em PDF.
+Skill para anotação ativa de aulas com slides em PDF, no padrão do vault Obsidian do usuário (`5 facul/`).
 
 Dois modos: `criar` e `corrigir`. Leia os argumentos em `$ARGUMENTS` para determinar qual executar.
 
@@ -10,7 +10,7 @@ Dois modos: `criar` e `corrigir`. Leia os argumentos em `$ARGUMENTS` para determ
 
 **Ativado quando:** argumentos não contêm `corrigir` (pode ou não conter caminhos).
 
-**Objetivo:** gerar um arquivo de notas estruturado com perguntas ativas espalhadas, pronto para o aluno responder durante a aula.
+**Objetivo:** gerar um arquivo de notas estruturado com perguntas ativas espalhadas, pronto para o aluno responder durante a aula — seguindo exatamente a convenção já usada nas outras notas do vault.
 
 ### Passo 1 — descobrir o PDF principal
 
@@ -24,40 +24,60 @@ ls -t ~/Downloads/*.pdf 2>/dev/null | head -20
 
 Mostre a lista numerada ao usuário e pergunte qual usar. Aguarde a resposta antes de continuar.
 
-### Passo 2 — definir o arquivo de saída
+### Passo 2 — descobrir a convenção antes de escrever qualquer coisa
 
-Determine a pasta de destino e o nome do `.md`:
-- Se $ARGUMENTS contiver um caminho `.md`, use-o
-- Caso contrário, use o diretório de trabalho atual
+**Nunca invente formato.** Antes de decidir nome de arquivo, frontmatter ou qualquer estrutura, descubra o padrão real:
 
-O **código numérico da aula** é o número de arquivos `.md` já existentes na pasta + 1, com zero à esquerda:
+1. Determine a pasta de destino do `.md` (caminho `.md` em $ARGUMENTS, ou diretório de trabalho atual).
+2. Liste os `.md` já existentes nessa pasta:
+   ```bash
+   ls "<dir_da_nota>"/*.md 2>/dev/null
+   ```
+3. **Se a pasta já tem notas**, leia pelo menos uma inteira (a mais recente) e extraia dela: frontmatter usado, como o professor é referenciado, se há tags no corpo, estilo de escrita (prosa vs. bullets), densidade de perguntas `[?]`, convenção de nome de arquivo.
+4. **Se a pasta está vazia** (ex: primeira aula da disciplina), ela não tem exemplo próprio — **procure em pastas irmãs** dentro do mesmo nível (ex: outras disciplinas do mesmo semestre, ou do semestre anterior se existir):
+   ```bash
+   # a partir da pasta de destino, olhe 1–2 níveis acima e liste as disciplinas irmãs
+   ls -d "<dir_da_nota>/.."/*/ 2>/dev/null
+   ```
+   Leia pelo menos uma nota de aula completa de uma disciplina irmã (não só o arquivo-índice) para capturar o padrão real de escrita, não apenas de nomenclatura.
+5. Nunca prossiga para os próximos passos sem ter lido pelo menos um exemplo real (da própria pasta ou de uma irmã). Se literalmente não existir nenhuma nota em lugar nenhum do vault, aí sim use a convenção descrita nos Passos 3–8 abaixo como padrão default — mas isso deve ser exceção, não o caminho normal.
+
+O restante deste modo descreve a convenção **default observada no vault** — use-a como ponto de partida, mas o que você leu no Passo 2 tem prioridade se divergir.
+
+### Passo 3 — definir o arquivo de saída
+
+**Nome do arquivo:** `<código-da-disciplina>.<índice-sequencial> <slug descritivo, minúsculo, com espaços>.md`
+
+- `<código-da-disciplina>` é o prefixo da pasta (ex: pasta `6.5 algodão café e agroecologia` → código `6.5`).
+- `<índice-sequencial>` começa em `0` e é o número de arquivos de aula (`X.Y.*`) já existentes na pasta, **excluindo** o arquivo-índice da disciplina (`X.Y Nome Da Disciplina.md`).
+- O slug é derivado do título/tema principal do PDF, em minúsculas, com espaços (não kebab-case, não snake_case) — ex: `6.4.0 introducao genetica molecular.md`, `6.3.0 apresentação da disciplina, histoico importancia economica e custo de produção.md`.
+- Se o PDF cobrir dois temas claramente distintos com capas/títulos próprios (comum quando o professor sobe um PDF único com "Parte 1" e "Parte 2"), **separe em duas notas** com índices sequenciais consecutivos (`X.Y.0`, `X.Y.1`), não uma nota única gigante.
 
 ```bash
-printf "%02d" $(( $(ls "<dir_da_nota>"/*.md 2>/dev/null | wc -l) + 1 ))
-# ex: 01, 02, 13
+ls "<dir_da_nota>"/*.md 2>/dev/null | grep -cE '^.*/[0-9]+\.[0-9]+\.[0-9]+ '
+# esse número é o próximo índice sequencial
 ```
 
-O **nome descritivo** do arquivo será derivado do conteúdo do PDF no Passo 4 (após extração do texto). Por ora, use um placeholder — o nome final do `.md` será `<código>_<nome-descritivo>.md`.
+### Passo 4 — identificar professor e disciplina
 
-### Passo 3 — identificar professor e disciplina
-
-**Disciplina:** use sempre o nome da pasta de destino do `.md`. Nunca pergunte ao usuário.
+**Disciplina:** nome da pasta de destino, convertido para `CamelCase` sem espaços/acentos para o campo `disciplina:` do frontmatter (ex: pasta `6.5 algodão café e agroecologia` → `AlgodaoCafeEAgroecologia`).
 
 **Professor:** descubra automaticamente nesta ordem:
 
-1. Verifique se o nome do professor aparece no texto extraído do PDF (capa, cabeçalhos, rodapés)
-2. Se não, busque a tag `#Prof...` nos outros `.md` da mesma pasta:
+1. Verifique se o nome do professor aparece no texto extraído do PDF (capa, cabeçalhos, rodapés).
+2. Se não, procure um wikilink já usado para ele nas notas existentes (da própria pasta ou de pasta irmã):
    ```bash
-   grep -roh "#Prof[A-Z][A-Za-z]*" "<dir_da_nota>/" --include="*.md" 2>/dev/null | sort -u | head -5
+   grep -roh "\[\[4 pessoas/professores-palestrantes/[^]]*\]\]" "<dir_da_nota>/.." --include="*.md" 2>/dev/null | sort -u | head -10
    ```
-3. Se não, leia as primeiras 5 linhas de cada `.md` da pasta em busca do padrão `#Prof`
-4. Só pergunte ao usuário se nenhuma busca retornar resultado
+3. Só pergunte ao usuário se nenhuma busca retornar resultado.
 
-O nome deve estar **completo** e no formato `#ProfNomeCompletoEmCamelCase` (ex: `#ProfThiagoLiborioRomanelli`). Nunca abrevie.
+Referencie o professor com **wikilink completo**, nunca com hashtag:
+```
+[[4 pessoas/professores-palestrantes/Nome Completo Do Professor]]
+```
+logo após o frontmatter, antes do título. Se o arquivo de ficha do professor (`4 pessoas/professores-palestrantes/Nome Completo.md`) ainda não existir, crie-o no Passo 8.
 
-### Passo 4 — extrair texto e derivar nome descritivo
-
-Extraia o texto do PDF original:
+### Passo 5 — extrair texto
 
 ```bash
 pdftotext "<caminho_do_pdf>" - 2>/dev/null
@@ -65,16 +85,14 @@ pdftotext "<caminho_do_pdf>" - 2>/dev/null
 
 Se o texto extraído for insuficiente (slides muito visuais, diagramas), use o Read tool nas páginas específicas — mas só quando necessário.
 
-Com base no conteúdo extraído, derive um **nome descritivo em kebab-case** a partir do título do primeiro slide ou tema principal (ex: `introducao-ao-transistor-bipolar`). Ignore completamente o nome original do arquivo do professor.
+### Passo 6 — armazenar as fontes
 
-### Passo 5 — armazenar as fontes
-
-Crie `.fontes/` na pasta de destino e copie o PDF renomeado:
+Crie `.fontes/` na pasta de destino e copie o PDF com nome no padrão `<NN>_aula_<slug_com_underscore>.pdf` (numeração própria da fonte, não do índice da nota — dois dígitos, começando em `01`):
 
 ```bash
 mkdir -p "<dir_da_nota>/.fontes"
-cp "<caminho_do_pdf>" "<dir_da_nota>/.fontes/<código>_<nome-descritivo>.pdf"
-# ex: .fontes/03_introducao-ao-transistor-bipolar.pdf
+cp "<caminho_do_pdf>" "<dir_da_nota>/.fontes/<NN>_aula_<slug_com_underscore>.pdf"
+# ex: .fontes/02_aula_higiene_legislacao.pdf
 ```
 
 Pergunte ao usuário: **"Há outros arquivos do professor em ~/Downloads para incluir nessa nota? (apostilas, exercícios, fórmulas)"**
@@ -82,49 +100,110 @@ Pergunte ao usuário: **"Há outros arquivos do professor em ~/Downloads para in
 Se sim:
 1. Liste `~/Downloads` e mostre ao usuário
 2. Aguarde ele identificar quais incluir
-3. Para cada extra:
-   - Copie para `.fontes/<código>_extra_<n>.<ext>` (ex: `03_extra_1.pdf`)
-   - Extraia o conteúdo (`pdftotext` para PDFs, Read para imagens)
-4. Use os extras para enriquecer seções da nota onde o material se encaixar, adicionar uma seção `## Materiais Complementares` ao final e gerar perguntas `> **[?]**` sobre pontos que podem surgir em sala
+3. Para cada extra, copie para `.fontes/<NN>_extra_<slug_com_underscore>.<ext>` (ex: `04_extra_absorcao_nutrientes_folha.pdf`) e extraia o conteúdo (`pdftotext` para PDFs, Read para imagens)
+4. Use os extras para enriquecer o texto da nota onde o material se encaixar; não é necessário criar seção separada — integre ao fluxo.
 
-### Passo 6 — construir as notas
+### Passo 7 — construir as notas
 
-- Anote **tudo que for relevante**, mesmo o que pareça óbvio — o aluno não deve precisar copiar nada durante a aula
-- Mantenha a estrutura dos slides (seções, hierarquia)
-- Use tabelas, listas e fórmulas quando o conteúdo pedir
-- Preserve citações diretas importantes em blockquote `>`
-- Para diagramas de fluxo/circuitos, represente em ASCII simples
+O estilo real do vault é **prosa sintética e densa**, não transcrição de slide. Escreva como quem já entendeu a aula e está resumindo pra si mesmo, não como quem está copiando tópicos:
 
-### Passo 7 — inserir perguntas ativas
+- Combine informações relacionadas em parágrafos corridos em vez de bullet por número de slide. Uma tabela só quando o dado é genuinamente tabular (cronograma, notas de avaliação, comparação numérica entre categorias) — não crie uma tabela pra cada bloco de slide.
+- Corte redundância agressivamente: se três slides seguidos dizem variações da mesma ideia, isso vira um parágrafo, não três seções.
+- Fórmulas e citações diretas importantes ficam em blockquote `>` ou bloco de código.
+- Diagramas de fluxo/estrutura simples podem virar ASCII quando ajudam a entender uma hierarquia (ex: estrutura de nós/ramos).
+- Separe blocos temáticos maiores com `---`.
+- Termine com `## Ação para próxima aula` **somente se houver itens reais pendentes** (leitura indicada, tarefa de laboratório/canteiro, prazo de entrega) — formato checklist `- [ ]`. Não invente itens genéricos.
 
-Espalhe perguntas `> **[?]**` ao longo das notas — pelo menos uma por seção, mais em seções densas. Varie o tipo conforme o conteúdo:
+### Passo 8 — inserir perguntas ativas
 
-- **Conceitual:** "O que é X? Por que Y acontece?"
-- **Aplicação:** "Em qual situação usaríamos X em vez de Y?"
-- **Previsão:** "O que acontece se X falhar / for alterado?"
-- **Comparação:** "Qual a diferença entre X e Y?"
-- **Cálculo:** se houver fórmulas, peça um exemplo numérico simples
-- **Verdadeiro/Falso:** afirmações para o aluno marcar e justificar
+As perguntas `[?]` são **poucas e cirúrgicas** — o padrão real do vault usa algo como 2 a 6 perguntas por nota inteira (não uma por seção). Reserve-as para os pontos de maior densidade conceitual, onde entender o "porquê" importa mais que decorar o número do slide.
 
-As perguntas devem forçar o aluno a prestar atenção em algo que o slide não entrega de bandeja. Não pergunte o que já está escrito no slide.
+Tipos possíveis: conceitual ("por que X acontece"), aplicação, previsão, comparação, cálculo (se houver fórmula), verdadeiro/falso com justificativa. A pergunta deve forçar o aluno a processar algo que o slide não entrega pronto — nunca pergunte o que já está escrito literalmente no texto.
 
-### Passo 8 — salvar o arquivo
+Formato: `> **[?]** <pergunta>`, deixando espaço em branco logo abaixo (linha vazia) para a resposta do aluno.
 
-Nome final do arquivo: `<código>_<nome-descritivo>.md` (ex: `03_introducao-ao-transistor-bipolar.md`).
+### Passo 9 — salvar o arquivo
 
-O arquivo deve começar com:
+Estrutura obrigatória no início de cada nota:
 
 ```markdown
-# <título da aula>
-
-#<slug-da-disciplina> #Prof<NomeCompletoEmCamelCase>
-
 ---
+disciplina: NomeDaDisciplinaEmCamelCase
+data: "[[AA-MM-DD]]"
+---
+
+[[4 pessoas/professores-palestrantes/Nome Completo Do Professor]]
+
+# <título da aula>
 ```
 
-As duas tags são **obrigatórias** e ficam no corpo logo abaixo do título. YAML frontmatter é opcional — só adicione se o aluno já usar ou pedir.
+- `disciplina:` no frontmatter é **obrigatório**. `data:` é opcional (inclua quando a aula tem data clara, no formato `AA-MM-DD` casando com as daily notes do vault, ex: `26-08-12`).
+- **Nunca use `#hashtags` no corpo** — nem para disciplina, nem para professor. A referência ao professor é sempre o wikilink do Passo 4.
+- Se `4 pessoas/professores-palestrantes/Nome Completo.md` ainda não existe, crie-o com:
+  ```markdown
+  ---
+  tipo: pessoa
+  ---
 
-Salve e informe o caminho do `.md` e o conteúdo de `.fontes/`.
+  ## areas do conhecimento
+
+
+
+  ## disciplinas
+
+  ### prof unico
+
+  - [[<caminho>/<X.Y> Nome Da Disciplina|Nome Da Disciplina]]
+
+  ### participação dividida
+
+
+  ### prof visitante
+
+
+  ## informações estratégicas
+
+  ### qualidade de aula
+
+
+  ### estilo e dificuldade de avaliação
+
+
+  ## artigos lidos
+
+
+  ## notas
+
+  ```
+- Se o arquivo-índice da disciplina `<X.Y> Nome Da Disciplina.md` (na raiz da pasta, nome capitalizado) ainda não existe, crie-o:
+  ```markdown
+  ---
+  disciplina: NomeDaDisciplinaEmCamelCase
+  ---
+
+  [[4 pessoas/professores-palestrantes/Nome Completo Do Professor]]
+
+  # Nome Da Disciplina
+  > Prof. Nome Completo Do Professor
+
+  ## Aulas
+  - [[<caminho completo>/<X.Y.0> <slug>|<X.Y.0> <slug>]]
+
+  ## Todas as notas (auto)
+  \`\`\`base
+  filters:
+    and:
+      - 'disciplina == "NomeDaDisciplinaEmCamelCase"'
+  views:
+    - type: table
+      name: "Todas"
+      order:
+        - file.name
+  \`\`\`
+  ```
+  Se o arquivo já existe, apenas adicione a nova aula à lista em `## Aulas`.
+
+Salve e informe ao usuário os caminhos de tudo que foi criado ou atualizado (nota(s) de aula, `.fontes/`, ficha do professor se nova, índice da disciplina se novo/atualizado).
 
 ---
 
@@ -132,7 +211,7 @@ Salve e informe o caminho do `.md` e o conteúdo de `.fontes/`.
 
 **Ativado quando:** argumentos contêm `corrigir`.
 
-Se um caminho de arquivo for fornecido, use-o. Se não, procure o `.md` mais recentemente modificado no diretório de trabalho atual.
+Se um caminho de arquivo for fornecido, use-o. Se não, procure o `.md` mais recentemente modificado no diretório de trabalho atual (ignorando o arquivo-índice da disciplina).
 
 **Objetivo:** fechar o ciclo da aula — corrigir escrita, avaliar respostas, arrematar o arquivo.
 
@@ -154,7 +233,10 @@ Se um caminho de arquivo for fornecido, use-o. Se não, procure o `.md` mais rec
 
 ## Observações gerais
 
-- As tags `#disciplina` e `#ProfNome` no corpo são obrigatórias — YAML é opcional
-- Não crie arquivos de planejamento nem documentos intermediários — trabalhe direto no arquivo final
-- Seja conciso nas avaliações: o aluno está revisando, não lendo um ensaio
-- A pasta `.fontes/` é oculta por ponto — não precisa aparecer nas notas, só arquiva as fontes originais
+- **Nunca invente convenção sem checar exemplos reais primeiro** (Passo 2) — isso vale mais que qualquer default descrito aqui.
+- Frontmatter `disciplina:` é obrigatório; `#hashtags` no corpo nunca são usados neste vault.
+- O professor é sempre referenciado por wikilink, nunca por hashtag.
+- Não crie arquivos de planejamento nem documentos intermediários — trabalhe direto nos arquivos finais (nota, índice da disciplina, ficha do professor).
+- Seja conciso nas avaliações do modo `corrigir`: o aluno está revisando, não lendo um ensaio.
+- A pasta `.fontes/` é oculta por ponto — não precisa aparecer nas notas, só arquiva as fontes originais.
+- Perguntas `[?]` são poucas e de alto valor — nunca uma por seção só para preencher.
