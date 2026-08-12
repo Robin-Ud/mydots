@@ -71,6 +71,41 @@ alias colheita='~/deving/colheita/colheita.sh'
 # 3. FUNÇÕES (idênticas ao .bashrc — zsh entende a mesma sintaxe)
 # ===========================================================
 
+setluz() {
+    if [[ "$1" == "-k" ]]; then
+        brightnessctl --device='tpacpi::kbd_backlight' set "$2"
+    else
+        brightnessctl set "${1}%"
+    fi
+}
+
+# ThinkLight + LEDs de status (power, logo da tampa, standby, ThinkVantage)
+setled() {
+    local alvo="$1"
+    local valor="$2"
+    local dev
+
+    case "$alvo" in
+        thinklight) dev='tpacpi::thinklight' ;;
+        power)      dev='tpacpi::power' ;;
+        logo)       dev='tpacpi::lid_logo_dot' ;;
+        standby)    dev='tpacpi::standby' ;;
+        tv)         dev='tpacpi::thinkvantage' ;;
+        all)
+            for dev in tpacpi::thinklight tpacpi::power tpacpi::lid_logo_dot tpacpi::standby tpacpi::thinkvantage; do
+                brightnessctl --device="$dev" set "$valor" &>/dev/null
+            done
+            return
+            ;;
+        *)
+            echo "uso: setled <thinklight|power|logo|standby|tv|all> <valor>" >&2
+            return 1
+            ;;
+    esac
+
+    brightnessctl --device="$dev" set "$valor"
+}
+
 # wiki do Hyprland offline (espelhada por ~/hyprland-wiki-0.51.0/mirror_wiki.py)
 hyprwiki() {
     local porta=8631
