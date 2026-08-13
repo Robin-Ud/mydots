@@ -1,8 +1,26 @@
 # .bashrc — Configuração do shell interativo (Bash)
 # Carregado toda vez que você abre um terminal novo.
+#
+# Voltou a ser o shell principal em 13/08/2026 (migração de volta do zsh).
+# O que o zsh dava e não vinha de graça aqui está resolvido assim:
+#   - autosuggestion + syntax highlighting  → ble.sh (seção 0)
+#   - hook `preexec` do UsageTracker        → seção 3.5, via PROMPT_COMMAND
 
 # ===========================================================
-# 1. SISTEMA — configurações globais e PATH
+# 0. BLE.SH — line editor: autosuggestion cinza + syntax highlighting
+#     Instalado em ~/.local/share/blesh (build da fonte, `make install`).
+#     A ORDEM É OBRIGATÓRIA: source com --noattach aqui no topo, e o
+#     `ble-attach` na ÚLTIMA linha do arquivo. Sem isso ele briga com o
+#     fzf e com o starship.
+#     PRA DESLIGAR: comente esta linha e a do `ble-attach` lá embaixo. O
+#     bash cai no readline puro, e o ↑/↓ da seção 1 continua valendo.
+# ===========================================================
+
+[[ $- == *i* ]] && [[ -f ~/.local/share/blesh/ble.sh ]] &&
+    source ~/.local/share/blesh/ble.sh --noattach
+
+# ===========================================================
+# 1. SISTEMA — configurações globais, PATH e histórico
 # ===========================================================
 
 # Carrega as definições globais do sistema (Fedora)
@@ -23,30 +41,92 @@ export EDITOR=nvim
 export NPM_CONFIG_USERCONFIG="$HOME/.config/npm/npmrc"
 export NPM_CONFIG_CACHE="$HOME/.cache/npm"
 
-# Carrega configs modulares da pasta ~/.bashrc.d/ (se existirem)
-if [ -d ~/.bashrc.d ]; then
-    for rc in ~/.bashrc.d/*; do
-        [ -f "$rc" ] && . "$rc"
-    done
-    unset rc
-fi
+# --- histórico ---------------------------------------------------------
+# O padrão do Fedora é 1000/500, o que é pouco e faz o bash truncar o
+# arquivo direto. Cada truncamento escreve um .bash_history-$$.tmp e, se o
+# terminal morrer no meio (fechar janela no Hyprland), o .tmp fica órfão —
+# foi assim que 11 deles se acumularam na home. Arquivo grande + `history -a`
+# a cada prompt (seção 3.5) resolvem a causa.
+HISTSIZE=100000
+HISTFILESIZE=200000
+HISTTIMEFORMAT='%F %T '
+shopt -s histappend
 
-# seta uma config padrão pra fzf
+# ignorespace (e não ignoreboth) de propósito: comandos repetidos CONTINUAM
+# entrando no histórico, o que mantém honesta a contagem do UsageTracker.
+# O que ele ignora é comando começando com espaço — o seu escape de
+# "não registra esse".
+HISTCONTROL=ignorespace
+
+# --- readline ----------------------------------------------------------
+# ↑/↓ buscam no histórico pelo prefixo já digitado, em vez de só rolar a
+# lista. É a rede de segurança do autosuggestion: continua valendo se o
+# ble.sh sair de cena.
+bind '"\e[A": history-search-backward' 2>/dev/null
+bind '"\e[B": history-search-forward'  2>/dev/null
+
+# --- fzf ---------------------------------------------------------------
 export FZF_DEFAULT_OPTS="--preview 'bat --color=always {}'"
 
-# key-bindings do fzf (Ctrl+R histórico, Ctrl+T arquivos, Alt+C diretórios)
-source /usr/share/fzf/shell/key-bindings.bash
+# key-bindings do fzf (Ctrl+R histórico, Ctrl+T arquivos, Alt+C diretórios).
+# Sob ble.sh usamos a integração dele, que é a versão que não briga com o
+# line editor; sem ble.sh, o script do sistema.
+if [[ ${BLE_VERSION-} ]]; then
+    ble-import -d integration/fzf-completion
+    ble-import -d integration/fzf-key-bindings
+else
+    source /usr/share/fzf/shell/key-bindings.bash
+fi
+
 # ===========================================================
 # 2. ALIASES — atalhos de comandos
 # ===========================================================
 
-alias :q='exit'        # Sair como no vim
-alias code='code .'    # Abre o VS Code na pasta atual
+alias pt='pytest -xv test.py'                    # roda o teste do projeto atual
+alias :q='exit'                                  # Sair como no vim
+alias ..='cd ..'                                 # sobe um diretório
+alias code='code .'                              # Abre o VS Code na pasta atual
 alias colheita='~/deving/colheita/colheita.sh'   # Fazenda viva: seus hábitos no terminal
 
 # ===========================================================
 # 3. FUNÇÕES
 # ===========================================================
+
+# setluz — brilho da tela (setluz 40) ou do teclado (setluz -k 2)
+setluz() {
+    if [[ "$1" == "-k" ]]; then
+        brightnessctl --device='tpacpi::kbd_backlight' set "$2"
+    else
+        brightnessctl set "${1}%"
+    fi
+}
+
+# setled — ThinkLight + LEDs de status (power, logo da tampa, standby, ThinkVantage)
+setled() {
+    local alvo="$1"
+    local valor="$2"
+    local dev
+
+    case "$alvo" in
+        thinklight) dev='tpacpi::thinklight' ;;
+        power)      dev='tpacpi::power' ;;
+        logo)       dev='tpacpi::lid_logo_dot' ;;
+        standby)    dev='tpacpi::standby' ;;
+        tv)         dev='tpacpi::thinkvantage' ;;
+        all)
+            for dev in tpacpi::thinklight tpacpi::power tpacpi::lid_logo_dot tpacpi::standby tpacpi::thinkvantage; do
+                brightnessctl --device="$dev" set "$valor" &>/dev/null
+            done
+            return
+            ;;
+        *)
+            echo "uso: setled <thinklight|power|logo|standby|tv|all> <valor>" >&2
+            return 1
+            ;;
+    esac
+
+    brightnessctl --device="$dev" set "$valor"
+}
 
 # hyprwiki — abre a wiki do Hyprland offline (espelho em ~/hyprland-wiki-0.51.0)
 hyprwiki() {
@@ -124,31 +204,6 @@ y() {
     rm -f -- "$tmp"
 }
 
-# bk — sistema de bookmarks (bk, bks, bks verify, unbk, bk --help)
-[[ -f ~/.config/bk/bk.sh ]] && source ~/.config/bk/bk.sh
-
-# tk — notas/aprovação das provas (tk, tks, tk passei, tk -h)
-[[ -f ~/deving/colheita/tk.sh ]] && source ~/deving/colheita/tk.sh
-
-# bashrc-help — mostra todas as funções e aliases customizados
-bashrc-help() {
-    echo ""
-    echo "  ALIASES"
-    echo "  :q              sair do terminal (estilo vim)"
-    echo "  code            abre VS Code na pasta atual"
-    echo "  colheita        roça do semestre: hábitos, provas e boletim no terminal"
-    echo "  tk / tks        lançar notas das provas e ver se passou (tk -h)"
-    echo ""
-    echo "  FUNÇÕES"
-    echo "  hq              abre HQ (pdf/cbr/cbz) via fzf + YACReader"
-    echo "  y               abre yazi e navega até a pasta escolhida"
-    echo "  facul           vai pro semestre mais recente do vault Obsidian"
-    echo "  verificar_uptime  avisa se o sistema está ligado há muito tempo"
-    echo ""
-    echo "  BOOKMARKS  (bk --help para detalhes)"
-    bks
-}
-
 # facul — vai pro semestre mais recente do vault Obsidian
 facul() {
     local base="$HOME/obsidian/5 facul"
@@ -161,15 +216,94 @@ facul() {
     cd "$dest" && echo "→ $dest"
 }
 
+# bk — sistema de bookmarks (bk, bks, bks verify, unbk, bk --help)
+[[ -f ~/.config/bk/bk.sh ]] && source ~/.config/bk/bk.sh
+
+# bashrc-help — mostra todas as funções e aliases customizados
+bashrc-help() {
+    echo ""
+    echo "  ALIASES"
+    echo "  pt              pytest -xv test.py"
+    echo "  :q              sair do terminal (estilo vim)"
+    echo "  ..              sobe um diretório"
+    echo "  code            abre VS Code na pasta atual"
+    echo "  colheita        roça do semestre: hábitos, provas e boletim no terminal"
+    echo ""
+    echo "  FUNÇÕES"
+    echo "  hq              abre HQ (pdf/cbr/cbz) via fzf + YACReader"
+    echo "  y               abre yazi e navega até a pasta escolhida"
+    echo "  facul           vai pro semestre mais recente do vault Obsidian"
+    echo "  setluz          brilho da tela (setluz 40) ou do teclado (setluz -k 2)"
+    echo "  setled          LEDs do ThinkPad (setled thinklight 1 | setled all 0)"
+    echo "  hyprwiki        abre a wiki do Hyprland offline"
+    echo "  verificar_uptime  avisa se o sistema está ligado há muito tempo"
+    echo ""
+    echo "  BOOKMARKS  (bk --help para detalhes)"
+    bks
+}
+
+# ===========================================================
+# 3.5 USAGE TRACKING — loga o primeiro token de cada comando digitado
+#     (ver ~/deving/UsageTracker; relatório: `usage-report`)
+#
+#     No zsh isso era um `add-zsh-hook preexec`. Bash não tem preexec: o
+#     trap DEBUG dispara uma vez por comando de pipeline (`ls | grep x`
+#     contaria 2) e já é território do starship. Então lemos a última
+#     entrada do histórico a cada prompt — dispara exatamente uma vez por
+#     linha digitada, e funciona com ou sem ble.sh.
+#
+#     Diferença única vs. zsh: o timestamp é o do FIM do comando, não o do
+#     início. Irrelevante pro usage_tracker.py, que só usa o ts pra "última
+#     vez usado em DD/MM" e detecção de stale.
+# ===========================================================
+
+_usage_tracker_last=
+_usage_tracker_log() {
+    local dir="$HOME/.local/share/usage-tracker"
+    local hist n cmd
+
+    # `read` com IFS padrão resolve os dois detalhes chatos da saída do
+    # `history`: a indentação da esquerda e os DOIS espaços entre o número e
+    # o comando. Fatiar isso na mão com ${x#* } deixa um espaço sobrando e
+    # ${cmd%% *} devolve string vazia — foi exatamente esse o bug.
+    read -r n cmd <<< "$(HISTTIMEFORMAT= history 1)"
+
+    # nada novo: Enter vazio, ou comando com espaço na frente (ignorespace)
+    [[ -z $cmd || $n == "$_usage_tracker_last" ]] && return
+    _usage_tracker_last=$n
+
+    [[ -d $dir ]] || mkdir -p "$dir"
+    printf '%s\t%s\n' "$EPOCHSECONDS" "${cmd%% *}" >> "$dir/cmd_log.tsv"
+}
+
+_bashrc_prompt_hook() {
+    _usage_tracker_log
+    history -a   # grava já: terminal morto não leva o histórico junto
+}
+
+# O /etc/bashrc do Fedora declara PROMPT_COMMAND como array (declare -a),
+# mas em outros contextos ele vem como string simples. Registra do jeito certo
+# pros dois casos.
+if [[ ${PROMPT_COMMAND@a} == *a* ]]; then
+    PROMPT_COMMAND+=(_bashrc_prompt_hook)
+else
+    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}_bashrc_prompt_hook"
+fi
+
 # ===========================================================
 # 4. INICIALIZAÇÃO — roda ao abrir cada terminal
 # ===========================================================
 
 # Prompt bonito com informações de git, tempo de comando, etc.
+# Precisa vir DEPOIS do source do ble.sh: o `starship init bash` detecta
+# $BLE_VERSION e se pluga via blehook em vez de mexer no PROMPT_COMMAND.
 eval "$(starship init bash)"
 
 # Ferramentas instaladas via Rust/Cargo
-. "$HOME/.cargo/env"
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # opencode
 export PATH=/home/rud/.opencode/bin:$PATH
+
+# ble.sh: attach por último, com tudo já configurado (ver seção 0).
+[[ ${BLE_VERSION-} ]] && ble-attach
