@@ -17,3 +17,11 @@
 # zsh-autosuggestions usava — e puxa o color8 do seu tema (#414868), então
 # acompanha o terminal em vez de fixar um hex.
 ble-face auto_complete=fg=8
+
+# ---------------------------------------------------------------------------
+# Atualizar o ble.sh (não tem pacote no Fedora, é build da fonte):
+#   git clone --recursive --depth 1 --shallow-submodules \
+#       https://github.com/akinomyoga/ble.sh /tmp/ble.sh-build
+#   make -C /tmp/ble.sh-build install PREFIX=~/.local && rm -rf /tmp/ble.sh-build
+# Versão instalada em 13/08/2026: 0.4.0-devel4+95ae551
+# ---------------------------------------------------------------------------
