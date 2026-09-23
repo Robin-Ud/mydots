@@ -68,14 +68,34 @@ bind '"\e[B": history-search-forward'  2>/dev/null
 # --- fzf ---------------------------------------------------------------
 export FZF_DEFAULT_OPTS="--preview 'bat --color=always {}'"
 
-# key-bindings do fzf (Ctrl+R histórico, Ctrl+T arquivos, Alt+C diretórios).
+# key-bindings do fzf (Ctrl+R histórico, Ctrl+O arquivos, Alt+C diretórios).
 # Sob ble.sh usamos a integração dele, que é a versão que não briga com o
 # line editor; sem ble.sh, o script do sistema.
 if [[ ${BLE_VERSION-} ]]; then
     ble-import -d integration/fzf-completion
     ble-import -d integration/fzf-key-bindings
+
+    # Ctrl+O em vez de Ctrl+T pro buscador de arquivos, igual ao quick
+    # switcher do Obsidian. accept-and-next é o default do keymap emacs
+    # do ble.sh pra Ctrl+T (ver lib/keymap.emacs.sh), então restauramos
+    # isso ao desfazer o bind que a integração acima criou.
+    ble-bind -f C-t accept-and-next
+    ble-bind -m emacs   -x C-o fzf-file-widget
+    ble-bind -m vi_imap -x C-o fzf-file-widget
+    ble-bind -m vi_nmap -s C-o 'i\C-o'
 else
     source /usr/share/fzf/shell/key-bindings.bash
+
+    # Ctrl+O em vez de Ctrl+T pro buscador de arquivos, igual ao quick
+    # switcher do Obsidian. transpose-chars é o default do readline pra
+    # Ctrl+T, então restauramos isso ao desfazer o bind que o script
+    # acima criou.
+    bind -m emacs-standard '"\C-t": transpose-chars'
+    bind -m vi-command '"\C-t": "\C-t"'
+    bind -m vi-insert '"\C-t": "\C-t"'
+    bind -m emacs-standard -x '"\C-o": fzf-file-widget'
+    bind -m vi-command -x '"\C-o": fzf-file-widget'
+    bind -m vi-insert -x '"\C-o": fzf-file-widget'
 fi
 
 # ===========================================================
