@@ -197,25 +197,68 @@ require("lazy").setup({
         end
     },
 
-    -- Tokyo Night: tema escuro com cores inspiradas em Tokyo à noite
+    -- Cyberpunk: tema hacker neon (preto, verde matrix, vermelho e amarelo).
+    -- Cores customizadas e destaques extra de markdown ficam à parte, na
+    -- seção 5 logo abaixo — não mexe em highlight aqui dentro.
     {
-        "folke/tokyonight.nvim",
+        "taigrr/cyberpunk.nvim",
         lazy = false,
         priority = 1000,     -- Carrega antes de outros plugins para evitar flash
         opts = {
-            style       = "night",
-            transparent = false,
-            styles      = { sidebars = "dark", floats = "dark" },
+            transparent = true,   -- deixa o fundo do kitty vazar, sem caixa sólida
         },
         config = function(_, opts)
-            require("tokyonight").setup(opts)
-            vim.cmd([[colorscheme tokyonight]])
+            require("cyberpunk").setup(opts)
+            vim.cmd([[colorscheme cyberpunk]])
         end
     },
 })
 
 -- ========================================================================== --
--- 5. CONFIGURAÇÃO DOS LSPs
+-- 5. CORES CUSTOMIZADAS (tema cyberpunk + destaques no markdown)
+-- Pra trocar uma cor: só editar o hex na tabela CORES logo abaixo, o resto
+-- do bloco só referencia os nomes. Precisa rodar depois do "colorscheme
+-- cyberpunk" lá em cima (seção 4), senão o tema sobrescreve de volta.
+-- ========================================================================== --
+
+local CORES = {
+    verde_neon   = "#89f336",  -- texto padrão (Normal)
+    verde_oliva  = "#408000",  -- número de linha — cor original do tema, mais discreta
+    azul_neon    = "#00bfff",  -- negrito e marcadores customizados no markdown
+    amarelo_neon = "#ffd302",  -- títulos (#, ##, ###...) no markdown
+}
+
+-- Cor base do texto e do número de linha
+vim.api.nvim_set_hl(0, "Normal", { fg = CORES.verde_neon })
+vim.api.nvim_set_hl(0, "LineNr", { fg = CORES.verde_oliva })
+
+-- Markdown: negrito (**texto**) e títulos (#, ##...) — grupos nativos do treesitter
+vim.api.nvim_set_hl(0, "@markup.strong",  { fg = CORES.azul_neon,    bold = true })
+vim.api.nvim_set_hl(0, "@markup.heading", { fg = CORES.amarelo_neon, bold = true })
+
+-- Markdown: %% %%, 'aspas', "aspas" e linhas de ---- não têm nó próprio nem no
+-- treesitter nem no syntax do markdown. Por isso usam grupos à parte, pintados
+-- via matchadd() no autocmd abaixo — matchadd desenha por cima de tudo
+-- (treesitter + syntax); "syntax match" sozinho fica embaixo e não pega.
+vim.api.nvim_set_hl(0, "MdComentario",   { fg = CORES.azul_neon })  -- %% comentário %%
+vim.api.nvim_set_hl(0, "MdAspasSimples", { fg = CORES.azul_neon })  -- 'aspas simples'
+vim.api.nvim_set_hl(0, "MdAspasDuplas",  { fg = CORES.azul_neon })  -- "aspas duplas"
+vim.api.nvim_set_hl(0, "MdTracos",       { fg = CORES.azul_neon })  -- ---- (3+ traços)
+
+-- Cada match só existe dentro da janela/buffer onde foi criado, por isso
+-- precisa recriar toda vez que um arquivo markdown é aberto (evento FileType)
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "markdown",
+    callback = function()
+        vim.fn.matchadd("MdComentario",   [[%%.\{-}%%]])
+        vim.fn.matchadd("MdAspasSimples", [['[^']\{-}']])
+        vim.fn.matchadd("MdAspasDuplas",  [["[^"]\{-}"]])
+        vim.fn.matchadd("MdTracos",       [[----*]])
+    end,
+})
+
+-- ========================================================================== --
+-- 6. CONFIGURAÇÃO DOS LSPs
 -- Mason instala os servidores; mason-lspconfig os conecta ao nvim-cmp.
 -- ========================================================================== --
 require("mason").setup()
@@ -256,7 +299,7 @@ if vim.fn.executable("R") == 1 then
 end
 
 -- ========================================================================== --
--- 6. ATALHOS DO LSP
+-- 7. ATALHOS DO LSP
 -- Ativados apenas quando um LSP está conectado ao arquivo atual (LspAttach).
 -- ========================================================================== --
 vim.api.nvim_create_autocmd('LspAttach', {
@@ -276,7 +319,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
 })
 
 -- ========================================================================== --
--- 7. FORMATAÇÃO AUTOMÁTICA AO SALVAR
+-- 8. FORMATAÇÃO AUTOMÁTICA AO SALVAR
 -- ========================================================================== --
 vim.api.nvim_create_autocmd("BufWritePre", {
     callback = function()
