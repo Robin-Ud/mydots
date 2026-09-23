@@ -334,6 +334,45 @@ obnow() {
     esac
 }
 
+# flatpdfs — junta todos os PDFs de uma pasta (recursivo) numa pasta irmã "<pasta> - PDFs"
+# Útil pra exports do Zotero, onde os PDFs ficam espalhados em subpastas de hash
+# -z: também extrai os highlights/notas do Zotero (anotações nativas nos PDFs) num highlights.csv
+flatpdfs() {
+    local extrair_highlights=0
+    local OPTIND=1
+    while getopts "z" opt; do
+        case "$opt" in
+            z) extrair_highlights=1 ;;
+            *) return 1 ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    local origem="${1:-.}"
+    origem="${origem%/}"
+
+    if [ ! -d "$origem" ]; then
+        echo "Erro: a pasta '$origem' não existe."
+        return 1
+    fi
+
+    local origem_abs base pai destino
+    origem_abs="$(cd "$origem" && pwd)"
+    base="$(basename "$origem_abs")"
+    pai="$(dirname "$origem_abs")"
+    destino="$pai/$base - PDFs"
+
+    mkdir -p "$destino"
+    find "$origem_abs" -type f -iname "*.pdf" -exec cp -n {} "$destino/" \;
+
+    echo "→ $destino"
+    ls -la "$destino"
+
+    if [ "$extrair_highlights" = "1" ]; then
+        python3 "$HOME/.mydots/bash/zotero_highlights.py" "$origem_abs" "$destino/highlights.csv"
+    fi
+}
+
 # bk — sistema de bookmarks (bk, bks, bks verify, unbk, bk --help)
 [[ -f ~/.config/bk/bk.sh ]] && source ~/.config/bk/bk.sh
 
@@ -351,6 +390,7 @@ bashrc-help() {
     echo "  hq              abre HQ (pdf/cbr/cbz) via fzf + YACReader"
     echo "  y               abre yazi e navega até a pasta escolhida"
     echo "  facul           vai pro semestre mais recente do vault Obsidian"
+    echo "  flatpdfs [-z] [pasta]  achata PDFs numa pasta irmã \"<pasta> - PDFs\" (-z: extrai highlights do Zotero pra CSV)"
     echo "  setluz          brilho da tela (setluz 40) ou do teclado (setluz -k 2)"
     echo "  setled          LEDs do ThinkPad (setled thinklight 1 | setled all 0)"
     echo "  settela         espelhar/isolar monitor externo (settela espelhar | so-externo | normal)"
