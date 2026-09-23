@@ -165,6 +165,11 @@ require("lazy").setup({
         config = function()
             local cmp = require("cmp")
             cmp.setup({
+                -- Desliga o popup de sugestões em arquivos de prosa (markdown, txt)
+                enabled = function()
+                    local disabled_filetypes = { markdown = true, text = true }
+                    return not disabled_filetypes[vim.bo.filetype]
+                end,
                 snippet = {
                     expand = function(args)
                         require('luasnip').lsp_expand(args.body)
