@@ -298,6 +298,21 @@ if vim.fn.executable("R") == 1 then
     vim.lsp.enable('r_language_server')
 end
 
+-- zk: LSP do cofre Obsidian (wikilinks, dead-link, backlinks). Também não
+-- vem pelo Mason, e só faz sentido dentro de um notebook zk (pasta com
+-- .zk/), então a raiz é resolvida a partir dali em vez do cwd do nvim.
+if vim.fn.executable("zk") == 1 then
+    vim.lsp.config('zk', {
+        cmd = { 'zk', 'lsp' },
+        filetypes = { 'markdown' },
+        root_dir = function(bufnr, on_dir)
+            on_dir(vim.fs.root(bufnr, '.zk'))
+        end,
+        capabilities = require('cmp_nvim_lsp').default_capabilities(),
+    })
+    vim.lsp.enable('zk')
+end
+
 -- ========================================================================== --
 -- 7. ATALHOS DO LSP
 -- Ativados apenas quando um LSP está conectado ao arquivo atual (LspAttach).
