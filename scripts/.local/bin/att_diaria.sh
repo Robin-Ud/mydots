@@ -19,6 +19,15 @@ if [ "$(cat "$ARQUIVO_CONTROLE" 2>/dev/null)" == "$(date +%F)" ]; then
     exit 0
 fi
 
+# Poda a lixeira do trash-cli. Nao depende de rede, entao roda antes do ping.
+# Mantem os ultimos DIAS_LIXEIRA dias e apaga o resto DE VEZ (nao tem desfazer).
+# -f para nunca travar o boot esperando confirmacao; em segundo plano para nao
+# atrasar a janela de atualizacao.
+DIAS_LIXEIRA=90
+if command -v trash-empty &>/dev/null; then
+    trash-empty -f "$DIAS_LIXEIRA" &>/dev/null &
+fi
+
 if ! ping -c 1 -W 2 8.8.8.8 &>/dev/null; then
     kill -9 $PPID
     exit 0
