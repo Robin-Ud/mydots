@@ -112,6 +112,39 @@ alias colheita='~/deving/colheita/colheita.sh'   # Fazenda viva: seus hábitos n
 # 3. FUNÇÕES
 # ===========================================================
 
+# rm — vai para a lixeira em vez de destruir. Desfaz com `trash-restore`.
+# As flags do rm (-r, -f, -rf, -i) sao ACEITAS E IGNORADAS de proposito: o
+# hábito de digitar `rm -rf` nao pode furar a rede de protecao.
+# Para destruir de verdade: `rmf` (abaixo) ou `command rm -rf`.
+# Atencao: nada disso vale em `sudo rm`, em script, nem em outra maquina.
+rm() {
+    local alvos=()
+    local a
+    for a in "$@"; do
+        case "$a" in
+            --) ;;
+            -*) ;;                       # absorve flag do rm
+            *) alvos+=("$a") ;;
+        esac
+    done
+    if [[ ${#alvos[@]} -eq 0 ]]; then
+        echo "rm: nada a apagar" >&2
+        return 1
+    fi
+    if ! command -v trash-put >/dev/null; then
+        # Sem trash-put NAO cai para o rm real: o default aqui nunca destroi.
+        echo "rm: trash-cli nao instalado (sudo dnf install trash-cli)." >&2
+        echo "    para apagar definitivamente: rmf ${alvos[*]}" >&2
+        return 1
+    fi
+    trash-put -- "${alvos[@]}"
+}
+
+# rmf — destruicao real, sem lixeira. O gesto perigoso agora tem nome proprio.
+rmf() {
+    command rm -rf "$@"
+}
+
 # setluz — brilho da tela (setluz 40) ou do teclado (setluz -k 2)
 setluz() {
     if [[ "$1" == "-k" ]]; then
