@@ -24,9 +24,16 @@ vim.g.maplocalleader = ","         -- Líder local: atalhos de linguagem (R.nvim
 -- 2. ATALHOS CUSTOMIZADOS
 -- ========================================================================== --
 
--- ç / Ç — insere linha vazia abaixo/acima sem sair do modo normal
-vim.keymap.set('n', 'ç', 'm`o<Esc>``', { noremap = true, silent = true })
-vim.keymap.set('n', 'Ç', 'm`O<Esc>``', { noremap = true, silent = true })
+-- h / H — insere linha vazia abaixo/acima sem sair do modo normal
+vim.keymap.set('n', 'h', 'm`o<Esc>``', { noremap = true, silent = true })
+vim.keymap.set('n', 'H', 'm`O<Esc>``', { noremap = true, silent = true })
+
+-- Coluna de movimento deslocada: jklç em vez de hjkl
+-- (h ficou livre acima; ç virou "direita")
+vim.keymap.set({ 'n', 'v', 'o' }, 'j', 'h', { noremap = true })
+vim.keymap.set({ 'n', 'v', 'o' }, 'k', 'j', { noremap = true })
+vim.keymap.set({ 'n', 'v', 'o' }, 'l', 'k', { noremap = true })
+vim.keymap.set({ 'n', 'v', 'o' }, 'ç', 'l', { noremap = true })
 
 -- Alt+M — salva e roda o arquivo atual com o script tcd
 vim.keymap.set('n', '<A-m>', ':w <bar> !tcd %<CR>', { noremap = true, silent = false, desc = "Rodar com tcd" })
