@@ -148,7 +148,13 @@ rmf() {
 # setluz — brilho da tela (setluz 40) ou do teclado (setluz -k 2)
 setluz() {
     if [[ "$1" == "-k" ]]; then
-        brightnessctl --device='tpacpi::kbd_backlight' set "$2"
+        local dev
+        dev=$(ls -d /sys/class/leds/*kbd_backlight 2>/dev/null | head -1)
+        if [[ -z "$dev" ]]; then
+            echo "setluz: este teclado não tem backlight (nenhum *kbd_backlight em /sys/class/leds)" >&2
+            return 1
+        fi
+        brightnessctl --device="${dev##*/}" set "$2"
     else
         brightnessctl set "${1}%"
     fi
