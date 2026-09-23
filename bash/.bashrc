@@ -187,6 +187,37 @@ setled() {
     brightnessctl --device="$dev" set "$valor"
 }
 
+# settela — espelhar/isolar monitor externo (settela espelhar | so-externo | normal)
+settela() {
+    local ext
+    ext=$(hyprctl monitors -j | jq -r '.[] | select(.name != "eDP-1") | .name' | head -1)
+
+    case "$1" in
+        espelhar)
+            if [[ -z "$ext" ]]; then
+                echo "settela: nenhum monitor externo conectado" >&2
+                return 1
+            fi
+            hyprctl keyword monitor "$ext,preferred,auto,1,mirror,eDP-1"
+            ;;
+        so-externo)
+            if [[ -z "$ext" ]]; then
+                echo "settela: nenhum monitor externo conectado" >&2
+                return 1
+            fi
+            hyprctl keyword monitor "eDP-1,disable"
+            ;;
+        normal)
+            hyprctl keyword monitor "eDP-1,preferred,auto,1"
+            [[ -n "$ext" ]] && hyprctl keyword monitor "$ext,preferred,auto,1"
+            ;;
+        *)
+            echo "uso: settela espelhar | so-externo | normal" >&2
+            return 1
+            ;;
+    esac
+}
+
 # hyprwiki — abre a wiki do Hyprland offline (espelho em ~/hyprland-wiki-0.51.0)
 hyprwiki() {
     local porta=8631
@@ -294,6 +325,7 @@ bashrc-help() {
     echo "  facul           vai pro semestre mais recente do vault Obsidian"
     echo "  setluz          brilho da tela (setluz 40) ou do teclado (setluz -k 2)"
     echo "  setled          LEDs do ThinkPad (setled thinklight 1 | setled all 0)"
+    echo "  settela         espelhar/isolar monitor externo (settela espelhar | so-externo | normal)"
     echo "  hyprwiki        abre a wiki do Hyprland offline"
     echo "  verificar_uptime  avisa se o sistema está ligado há muito tempo"
     echo ""
