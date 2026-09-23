@@ -142,7 +142,12 @@ require("lazy").setup({
             configs.setup({
                 ensure_installed = { "c", "lua", "vim", "vimdoc", "rust", "python",
                                      "r", "markdown", "markdown_inline" },
-                highlight = { enable = true },
+                highlight = {
+                    enable = true,
+                    -- markdown precisa do syntax regex também: %%, aspas e ---- não têm
+                    -- nó próprio na gramática do treesitter, só dá pra pegar via regex
+                    additional_vim_regex_highlighting = { "markdown" },
+                },
             })
         end
     },
