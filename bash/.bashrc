@@ -306,6 +306,34 @@ facul() {
     cd "$dest" && echo "→ $dest"
 }
 
+# obnow — descobre/usa o arquivo aberto agora no Obsidian
+#   obnow             -> guarda o caminho em $obnow e imprime
+#   obnow cd          -> cd pra pasta do arquivo
+#   obnow nvim        -> abre o arquivo no nvim
+#   obnow <cmd> [...] -> roda "<cmd> [...] <arquivo>"
+obnow() {
+    local path
+    path=$(python3 "$HOME/deving/scripts/obsidian_atual.py" path) || return 1
+    export obnow="$path"
+
+    if [ $# -eq 0 ]; then
+        echo "$obnow"
+        return
+    fi
+
+    case "$1" in
+        cd)
+            cd "$(dirname "$path")" && echo "→ $PWD"
+            ;;
+        nvim)
+            nvim "$path"
+            ;;
+        *)
+            "$@" "$path"
+            ;;
+    esac
+}
+
 # bk — sistema de bookmarks (bk, bks, bks verify, unbk, bk --help)
 [[ -f ~/.config/bk/bk.sh ]] && source ~/.config/bk/bk.sh
 
