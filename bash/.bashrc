@@ -160,6 +160,25 @@ setluz() {
     fi
 }
 
+# setopac — transparência do fundo do kitty (setopac 90 | setopac sem número = padrão | -a: todas as janelas)
+setopac() {
+    local todas=()
+    [[ "$1" == "-a" ]] && { todas=(--all); shift; }
+    if [[ -z "$KITTY_LISTEN_ON" ]]; then
+        echo "setopac: rode dentro do kitty (reinicie o kitty se acabou de ligar o listen_on)" >&2
+        return 1
+    fi
+    local v="$1"
+    if [[ -z "$v" ]]; then
+        v=$(awk '$1=="background_opacity"{print $2*100}' ~/.config/kitty/kitty.conf)
+    fi
+    if ! [[ "$v" =~ ^[0-9]+$ ]] || (( v > 100 )); then
+        echo "uso: setopac [-a] [0-100]   (sem número: volta pro padrão do kitty.conf)" >&2
+        return 1
+    fi
+    kitten @ set-background-opacity "${todas[@]}" "$(awk -v v="$v" 'BEGIN{print v/100}')"
+}
+
 # setled — ThinkLight + LEDs de status (power, logo da tampa, standby, ThinkVantage)
 setled() {
     local alvo="$1"
@@ -392,6 +411,7 @@ bashrc-help() {
     echo "  facul           vai pro semestre mais recente do vault Obsidian"
     echo "  flatpdfs [-z] [pasta]  achata PDFs numa pasta irmã \"<pasta> - PDFs\" (-z: extrai highlights do Zotero pra CSV)"
     echo "  setluz          brilho da tela (setluz 40) ou do teclado (setluz -k 2)"
+    echo "  setopac         transparência do kitty (setopac 90 | sem número = padrão | -a todas)"
     echo "  setled          LEDs do ThinkPad (setled thinklight 1 | setled all 0)"
     echo "  settela         espelhar/isolar monitor externo (settela espelhar | so-externo | normal)"
     echo "  hyprwiki        abre a wiki do Hyprland offline"
