@@ -1,9 +1,15 @@
 {
-  "model": "sonnet",
+  "model": "opus",
   "enabledPlugins": {
     "rust-analyzer-lsp@claude-plugins-official": true
   },
   "effortLevel": "medium",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high",
+      "autoCompactWindow": 400000
+    }
+  },
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true
 }
