@@ -1,0 +1,12 @@
+#!/bin/sh
+# Hook do systemd-sleep: vai em /etc/systemd/system-sleep/ (dono root, 755).
+# O touchpad (SYNA8022, i2c-hid) às vezes volta da suspensão travado, sem
+# nenhuma interrupção chegando. Recarregar o driver resolve, então isso roda
+# toda vez que o note acorda. Sem && de propósito: se o -r falhar, o modprobe
+# ainda carrega o driver (foi assim que ele sumiu em 2026-10-27).
+
+[ "$1" = post ] || exit 0
+
+modprobe -r i2c_hid_acpi
+modprobe i2c_hid_acpi
+logger -t touchpad-resume "i2c_hid_acpi recarregado após $2"
