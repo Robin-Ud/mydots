@@ -68,34 +68,43 @@ bind '"\e[B": history-search-forward'  2>/dev/null
 # --- fzf ---------------------------------------------------------------
 export FZF_DEFAULT_OPTS="--preview 'bat --color=always {}'"
 
-# key-bindings do fzf (Ctrl+R histórico, Ctrl+O arquivos, Alt+C diretórios).
+# key-bindings do fzf (Ctrl+R histórico, Ctrl+O diretórios, Alt+C arquivos).
 # Sob ble.sh usamos a integração dele, que é a versão que não briga com o
 # line editor; sem ble.sh, o script do sistema.
 if [[ ${BLE_VERSION-} ]]; then
     ble-import -d integration/fzf-completion
     ble-import -d integration/fzf-key-bindings
 
-    # Ctrl+O em vez de Ctrl+T pro buscador de arquivos, igual ao quick
-    # switcher do Obsidian. accept-and-next é o default do keymap emacs
-    # do ble.sh pra Ctrl+T (ver lib/keymap.emacs.sh), então restauramos
-    # isso ao desfazer o bind que a integração acima criou.
+    # accept-and-next é o default do keymap emacs do ble.sh pra Ctrl+T
+    # (ver lib/keymap.emacs.sh), então restauramos isso ao desfazer o
+    # bind que a integração acima criou.
     ble-bind -f C-t accept-and-next
-    ble-bind -m emacs   -x C-o fzf-file-widget
-    ble-bind -m vi_imap -x C-o fzf-file-widget
-    ble-bind -m vi_nmap -s C-o 'i\C-o'
+
+    # Ctrl+O é o fuzzy-cd de diretórios (era Alt+C, igual ao quick
+    # switcher do Obsidian), e Alt+C vira o buscador de arquivos (era
+    # Ctrl+T) — troca completa das duas.
+    ble-bind -m emacs   -c C-o 'ble/util/eval-stdout "__fzf_cd__"'
+    ble-bind -m vi_imap -c C-o 'ble/util/eval-stdout "__fzf_cd__"'
+    ble-bind -m vi_nmap -c C-o 'ble/util/eval-stdout "__fzf_cd__"'
+    ble-bind -m emacs   -x M-c fzf-file-widget
+    ble-bind -m vi_imap -x M-c fzf-file-widget
+    ble-bind -m vi_nmap -s M-c 'i\M-c'
 else
     source /usr/share/fzf/shell/key-bindings.bash
 
-    # Ctrl+O em vez de Ctrl+T pro buscador de arquivos, igual ao quick
-    # switcher do Obsidian. transpose-chars é o default do readline pra
-    # Ctrl+T, então restauramos isso ao desfazer o bind que o script
-    # acima criou.
+    # transpose-chars é o default do readline pra Ctrl+T, então
+    # restauramos isso ao desfazer o bind que o script acima criou.
     bind -m emacs-standard '"\C-t": transpose-chars'
     bind -m vi-command '"\C-t": "\C-t"'
     bind -m vi-insert '"\C-t": "\C-t"'
-    bind -m emacs-standard -x '"\C-o": fzf-file-widget'
-    bind -m vi-command -x '"\C-o": fzf-file-widget'
-    bind -m vi-insert -x '"\C-o": fzf-file-widget'
+
+    # Ctrl+O é o fuzzy-cd de diretórios (era Alt+C, igual ao quick
+    # switcher do Obsidian), e Alt+C vira o buscador de arquivos (era
+    # Ctrl+T) — troca completa das duas.
+    bind -m emacs-standard '"\C-o": " \C-b\C-k \C-u`__fzf_cd__`\e\C-e\C-\e(\C-m\C-y\C-h\e \C-y\ey\C-x\C-x\C-d\C-y\ey\C-_"'
+    bind -m emacs-standard -x '"\ec": fzf-file-widget'
+    bind -m vi-command -x '"\ec": fzf-file-widget'
+    bind -m vi-insert -x '"\ec": fzf-file-widget'
 fi
 
 # ===========================================================
@@ -206,35 +215,14 @@ setled() {
     brightnessctl --device="$dev" set "$valor"
 }
 
-# settela — espelhar/isolar monitor externo (settela espelhar | so-externo | normal)
+# settela — espelhar/isolar monitor externo (settela espelhar | so-externo | normal); sem argumento abre a GUI (~/deving/desktop/SetTela)
 settela() {
-    local ext
-    ext=$(hyprctl monitors -j | jq -r '.[] | select(.name != "eDP-1") | .name' | head -1)
-
-    case "$1" in
-        espelhar)
-            if [[ -z "$ext" ]]; then
-                echo "settela: nenhum monitor externo conectado" >&2
-                return 1
-            fi
-            hyprctl keyword monitor "$ext,preferred,auto,1,mirror,eDP-1"
-            ;;
-        so-externo)
-            if [[ -z "$ext" ]]; then
-                echo "settela: nenhum monitor externo conectado" >&2
-                return 1
-            fi
-            hyprctl keyword monitor "eDP-1,disable"
-            ;;
-        normal)
-            hyprctl keyword monitor "eDP-1,preferred,auto,1"
-            [[ -n "$ext" ]] && hyprctl keyword monitor "$ext,preferred,auto,1"
-            ;;
-        *)
-            echo "uso: settela espelhar | so-externo | normal" >&2
-            return 1
-            ;;
-    esac
+    # sem argumento abre a janela; com argumento aplica o atalho (niri ou Hyprland)
+    if [[ $# -eq 0 ]]; then
+        setsid -f ~/deving/desktop/SetTela/settela.sh >/dev/null 2>&1
+        return
+    fi
+    ~/deving/desktop/SetTela/settela.sh "$@"
 }
 
 # hyprwiki — abre a wiki do Hyprland offline (espelho em ~/hyprland-wiki-0.51.0)
@@ -332,7 +320,7 @@ facul() {
 #   obnow <cmd> [...] -> roda "<cmd> [...] <arquivo>"
 obnow() {
     local path
-    path=$(python3 "$HOME/deving/scripts/obsidian_atual.py" path) || return 1
+    path=$(python3 "$HOME/deving/desktop/scripts/obsidian_atual.py" path) || return 1
     export obnow="$path"
 
     if [ $# -eq 0 ]; then
@@ -388,12 +376,15 @@ flatpdfs() {
     ls -la "$destino"
 
     if [ "$extrair_highlights" = "1" ]; then
-        python3 "$HOME/.mydots/bash/zotero_highlights.py" "$origem_abs" "$destino/highlights.csv"
+        python3 "$HOME/.config/bash/zotero_highlights.py" "$origem_abs" "$destino/highlights.csv"
     fi
 }
 
 # bk — sistema de bookmarks (bk, bks, bks verify, unbk, bk --help)
 [[ -f ~/.config/bk/bk.sh ]] && source ~/.config/bk/bk.sh
+
+# SetTempCommand — comandos temporários com validade (SetTempCommand --help)
+[[ -f ~/.config/bash/settempcom.sh ]] && source ~/.config/bash/settempcom.sh
 
 # bashrc-help — mostra todas as funções e aliases customizados
 bashrc-help() {
@@ -413,9 +404,10 @@ bashrc-help() {
     echo "  setluz          brilho da tela (setluz 40) ou do teclado (setluz -k 2)"
     echo "  setopac         transparência do kitty (setopac 90 | sem número = padrão | -a todas)"
     echo "  setled          LEDs do ThinkPad (setled thinklight 1 | setled all 0)"
-    echo "  settela         espelhar/isolar monitor externo (settela espelhar | so-externo | normal)"
+    echo "  settela         GUI de monitores; ou settela espelhar | so-externo | normal"
     echo "  hyprwiki        abre a wiki do Hyprland offline"
     echo "  verificar_uptime  avisa se o sistema está ligado há muito tempo"
+    echo "  SetTempCommand  comando temporário: SetTempCommand -d 5 nome 'cmd' (-l, -r, verify, -h)"
     echo ""
     echo "  BOOKMARKS  (bk --help para detalhes)"
     bks
@@ -423,7 +415,7 @@ bashrc-help() {
 
 # ===========================================================
 # 3.5 USAGE TRACKING — loga o primeiro token de cada comando digitado
-#     (ver ~/deving/UsageTracker; relatório: `usage-report`)
+#     (ver ~/deving/desktop/UsageTracker; relatório: `usage-report`)
 #
 #     No zsh isso era um `add-zsh-hook preexec`. Bash não tem preexec: o
 #     trap DEBUG dispara uma vez por comando de pipeline (`ls | grep x`
@@ -483,6 +475,14 @@ eval "$(starship init bash)"
 
 # opencode
 export PATH=/home/rud/.opencode/bin:$PATH
+
+# Pokémon aleatório + infos ao abrir o terminal (igual ao Hyprland do JaKooLit).
+# krabby = pokemon-colorscripts em Rust (cargo install krabby). No kitty o
+# sprite vira imagem de 9 linhas (nítido, encolhe na coluna estreita do niri);
+# fora dele, arte em texto que caiba. Infos em ~/.mydots/fastfetch.
+# Fica quieto dentro do terminal do nvim. PRA DESLIGAR: comente as 2 linhas.
+[[ $- == *i* && -z ${NVIM-} ]] && command -v krabby >/dev/null &&
+    python3 ~/.config/bash/pokemon_logo.py
 
 # ble.sh: attach por último, com tudo já configurado (ver seção 0).
 [[ ${BLE_VERSION-} ]] && ble-attach

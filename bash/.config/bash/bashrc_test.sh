@@ -12,7 +12,7 @@
 # uso: ./bashrc_test.sh
 
 set -u
-RC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.bashrc"
+RC="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.bashrc"   # este teste mora em bash/.config/bash/
 FALHAS=0
 
 ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
