@@ -1,0 +1,4 @@
+# rofi-rbw: Super+B no niri
+action = copy
+clipboarder = wl-copy
+clear-after = 30
