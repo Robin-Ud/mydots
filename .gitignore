@@ -1,2 +1,8 @@
+# Bytecode do Python (os testes geram ao importar o script)
+__pycache__/
+
+# Permissões de sessão do Claude Code neste repo (não é dotfile)
+.claude/settings.local.json
+
 # scripts/.local/bin/ só contém dotfiles rastreados pelo git.
 # pip instala direto em ~/.local/bin (diretório real, não symlink para cá).
