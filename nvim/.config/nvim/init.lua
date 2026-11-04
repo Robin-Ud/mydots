@@ -59,9 +59,7 @@ vim.g.rustaceanvim = {
             if ra == "" then ra = vim.fn.expand("~/.cargo/bin/rust-analyzer") end
             return { ra }
         end,
-        capabilities = function()
-            return require("cmp_nvim_lsp").default_capabilities()
-        end,
+        -- capabilities: o rustaceanvim já detecta o cmp_nvim_lsp sozinho
         settings = {
             ["rust-analyzer"] = {
                 check = { command = "clippy" },  -- Usa clippy em vez de cargo check
@@ -222,31 +220,60 @@ require("lazy").setup({
 -- ========================================================================== --
 
 local CORES = {
-    verde_neon   = "#89f336",  -- texto padrão (Normal)
-    verde_oliva  = "#408000",  -- número de linha — cor original do tema, mais discreta
-    azul_neon    = "#00bfff",  -- negrito e marcadores customizados no markdown
-    amarelo_neon = "#ffd302",  -- títulos (#, ##, ###...) no markdown
+    verde_neon    = "#89f336",  -- texto padrão (Normal)
+    verde_oliva   = "#408000",  -- número de linha — cor original do tema, mais discreta
+    azul_neon     = "#00bfff",  -- negrito, marcadores de lista e marcadores customizados no markdown
+    amarelo_neon  = "#ffd302",  -- títulos H1/H2 (#, ##) no markdown
+    amarelo_escuro = "#c9a800", -- títulos H3-H6 (###...), tom mais discreto
+    rosa_neon     = "#ff2fd1",  -- itálico e citação (>) no markdown
+    laranja_neon  = "#ff8c00",  -- links no markdown
+    roxo_neon     = "#b967ff",  -- código inline e em bloco no markdown
+    vermelho_neon = "#ff3b3b",  -- matemática LaTeX ($...$ e $$...$$) no markdown
 }
 
 -- Cor base do texto e do número de linha
 vim.api.nvim_set_hl(0, "Normal", { fg = CORES.verde_neon })
 vim.api.nvim_set_hl(0, "LineNr", { fg = CORES.verde_oliva })
 
--- Markdown: negrito (**texto**) e títulos (#, ##...) — grupos nativos do treesitter
-vim.api.nvim_set_hl(0, "@markup.strong",  { fg = CORES.azul_neon,    bold = true })
-vim.api.nvim_set_hl(0, "@markup.heading", { fg = CORES.amarelo_neon, bold = true })
+-- Markdown: negrito, títulos, itálico, citação, links, código e listas —
+-- grupos nativos do treesitter (nvim-treesitter usa as queries padrão dele,
+-- sem override, então esses captures já existem prontos pra receber cor)
+vim.api.nvim_set_hl(0, "@markup.strong",     { fg = CORES.vermelho_neon, bold = true })
+vim.api.nvim_set_hl(0, "@markup.heading.1",  { fg = CORES.amarelo_neon, bold = true })
+vim.api.nvim_set_hl(0, "@markup.heading.2",  { fg = CORES.amarelo_neon, bold = true })
+vim.api.nvim_set_hl(0, "@markup.heading.3",  { fg = CORES.amarelo_escuro, bold = true })
+vim.api.nvim_set_hl(0, "@markup.heading.4",  { fg = CORES.amarelo_escuro, bold = true })
+vim.api.nvim_set_hl(0, "@markup.heading.5",  { fg = CORES.amarelo_escuro, bold = true })
+vim.api.nvim_set_hl(0, "@markup.heading.6",  { fg = CORES.amarelo_escuro, bold = true })
+vim.api.nvim_set_hl(0, "@markup.italic",     { fg = CORES.rosa_neon,   italic = true })
+vim.api.nvim_set_hl(0, "@markup.quote",      { fg = CORES.rosa_neon })
+vim.api.nvim_set_hl(0, "@markup.link",       { fg = CORES.laranja_neon })
+vim.api.nvim_set_hl(0, "@markup.link.label", { fg = CORES.laranja_neon, underline = true })
+vim.api.nvim_set_hl(0, "@markup.raw",        { fg = CORES.roxo_neon })
+vim.api.nvim_set_hl(0, "@markup.raw.block",  { fg = CORES.roxo_neon })
 
--- Markdown: %% %%, 'aspas', "aspas" e linhas de ---- não têm nó próprio nem no
--- treesitter nem no syntax do markdown. Por isso usam grupos à parte, pintados
--- via matchadd() no autocmd abaixo — matchadd desenha por cima de tudo
--- (treesitter + syntax); "syntax match" sozinho fica embaixo e não pega.
-vim.api.nvim_set_hl(0, "MdComentario",   { fg = CORES.azul_neon })  -- %% comentário %%
-vim.api.nvim_set_hl(0, "MdAspasSimples", { fg = CORES.azul_neon })  -- 'aspas simples'
-vim.api.nvim_set_hl(0, "MdAspasDuplas",  { fg = CORES.azul_neon })  -- "aspas duplas"
-vim.api.nvim_set_hl(0, "MdTracos",       { fg = CORES.azul_neon })  -- ---- (3+ traços)
+-- Markdown: %% %%, 'aspas', "aspas", linhas de ----, matemática LaTeX
+-- ($...$ e $$...$$) e linhas de lista (- / *) não têm nó próprio que cubra
+-- a linha toda nem no treesitter nem no syntax do markdown — o treesitter só
+-- marca o marcador (- ou *), não o texto do item. Por isso usam grupos à
+-- parte, pintados via matchadd() no autocmd abaixo — matchadd desenha por
+-- cima de tudo (treesitter + syntax); "syntax match" sozinho fica embaixo e
+-- não pega.
+vim.api.nvim_set_hl(0, "MdComentario",   { fg = CORES.azul_neon })     -- %% comentário %%
+vim.api.nvim_set_hl(0, "MdAspasSimples", { fg = CORES.azul_neon })     -- 'aspas simples'
+vim.api.nvim_set_hl(0, "MdAspasDuplas",  { fg = CORES.azul_neon })     -- "aspas duplas"
+vim.api.nvim_set_hl(0, "MdTracos",       { fg = CORES.azul_neon })     -- ---- (3+ traços)
+vim.api.nvim_set_hl(0, "MdMathInline",   { fg = CORES.vermelho_neon }) -- $matemática$
+vim.api.nvim_set_hl(0, "MdMathBlock",    { fg = CORES.vermelho_neon }) -- $$matemática em bloco$$
+vim.api.nvim_set_hl(0, "MdLista",        { fg = CORES.azul_neon })     -- - item / * item (linha toda)
+vim.api.nvim_set_hl(0, "MdNegrito",      { fg = CORES.vermelho_neon, bold = true }) -- **negrito**, mesmo dentro de lista
 
 -- Cada match só existe dentro da janela/buffer onde foi criado, por isso
--- precisa recriar toda vez que um arquivo markdown é aberto (evento FileType)
+-- precisa recriar toda vez que um arquivo markdown é aberto (evento FileType).
+-- MdLista pinta a linha toda (prioridade padrão 10) e MdNegrito é adicionado
+-- com prioridade maior (20), então **negrito** sempre vence sobre a cor da
+-- lista quando as duas se sobrepõem, em vez de o match da linha "tapar" o
+-- negrito por ter sido desenhado depois.
 vim.api.nvim_create_autocmd("FileType", {
     pattern = "markdown",
     callback = function()
@@ -254,6 +281,10 @@ vim.api.nvim_create_autocmd("FileType", {
         vim.fn.matchadd("MdAspasSimples", [['[^']\{-}']])
         vim.fn.matchadd("MdAspasDuplas",  [["[^"]\{-}"]])
         vim.fn.matchadd("MdTracos",       [[----*]])
+        vim.fn.matchadd("MdMathBlock",    [[\$\$\_.\{-}\$\$]])
+        vim.fn.matchadd("MdMathInline",   [[\$[^$]\{-}\$]])
+        vim.fn.matchadd("MdLista",        [[^\s*[-*]\s.*$]])
+        vim.fn.matchadd("MdNegrito",      [[\*\*[^*]\{-}\*\*]], 20)
     end,
 })
 
