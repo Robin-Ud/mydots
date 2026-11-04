@@ -1,152 +1,279 @@
 #!/usr/bin/env python3
-"""Cheatsheet de keybinds do Hyprland — exibe no rofi."""
+"""Cheatsheet de keybinds do Hyprland (Super + /) — exibe no rofi.
+
+A lista vem do Hyprland ao vivo (`hyprctl binds -j`), não de uma tabela à mão:
+bind novo aparece sozinho, bind removido some sozinho. Aqui só mora o
+dicionário que traduz comando → descrição. Bind sem descrição cai em "Outros"
+com o comando cru, para nunca sumir calado — é o sinal de que falta uma regra.
+
+Enter executa o atalho escolhido (quando a linha é um bind só).
+"""
 
 import json
+import re
 import subprocess
 
-# Formato: (seção, combo, descrição)
-KEYBINDS = [
-    # ── Apps ──────────────────────────────────────────────────────────
-    ("Apps",         "Super + Enter",              "Terminal"),
-    ("Apps",         "Alt + Enter",                "Navegador"),
-    ("Apps",         "Super + D",                  "Launcher de apps"),
-    ("Apps",         "Alt + V",                    "Obsidian (workspace atual)"),
-    ("Apps",         "Super + X",                  "Xournal++"),
-    ("Apps",         "Alt + G",                    "QGIS"),
-    ("Apps",         "Alt + A",                    "Anki (workspace atual)"),
-    ("Apps",         "Alt + Z",                    "Zotero (workspace atual)"),
-    ("Apps",         "Alt + D",                    "Gerenciador de arquivos (dolphin)"),
+# Ordem em que as seções aparecem. "Layout: <nome>" entra logo depois de Foco.
+SECTIONS = ["Apps", "Ir até o app", "Sistema", "Telas & Hardware", "Foco",
+            "LAYOUT", "Janelas", "Modo resize (Super + R)", "Workspaces",
+            "Scratchpad", "Screenshot", "Mídia", "Outros"]
 
-    # ── Sistema ───────────────────────────────────────────────────────
-    ("Sistema",      "Super + Q",                  "Fechar janela"),
-    ("Sistema",      "Super + Shift + C",          "Recarregar config"),
-    ("Sistema",      "Super + Shift + E",          "Sair do Hyprland"),
+# (regex sobre o comando, seção, descrição). Primeira que casa vence.
+# Grupos nomeados viram campos da descrição: {app}, {dir} …
+RULES = [
+    # ── layoutmsg: dependem do layout ativo ──
+    (r'layoutmsg "?swapwithmaster', "LAYOUT", "Trocar janela com o master"),
+    (r'layoutmsg "?focusmaster',    "LAYOUT", "Focar o master"),
+    (r'layoutmsg "?cyclenext',      "LAYOUT", "Próxima janela da pilha"),
+    (r'layoutmsg "?cycleprev',      "LAYOUT", "Janela anterior da pilha"),
+    (r'layoutmsg "?addmaster',      "LAYOUT", "Mais um master"),
+    (r'layoutmsg "?removemaster',   "LAYOUT", "Menos um master"),
+    (r'layoutmsg "?orientationnext', "LAYOUT", "Girar orientação"),
+    (r'layoutmsg "?orientationcycle', "LAYOUT", "Master: esquerda / centro / direita"),
+    (r'layoutmsg "?mfact -',        "LAYOUT", "Encolher master"),
+    (r'layoutmsg "?mfact \+',       "LAYOUT", "Crescer master"),
+    (r'layoutmsg "?togglesplit',    "LAYOUT", "Alternar split H/V"),
+    (r'layoutmsg "?(colresize|fit)', "LAYOUT", "Ajustar colunas"),
+    (r'layoutmsg "?(?P<msg>[^"]+)', "LAYOUT", "layoutmsg {msg}"),
+    (r'\bpseudo\b',                 "LAYOUT", "Pseudotile da janela"),
 
-    # ── Wallpaper & Hardware ──────────────────────────────────────────
-    ("Wallpaper & Hardware", "Super + W",                "Próximo wallpaper"),
-    ("Wallpaper & Hardware", "Super + Shift + W",        "Remover wallpaper atual"),
-    ("Wallpaper & Hardware", "Super + Shift + Ctrl + W", "Sincronizar DJI"),
-    ("Wallpaper & Hardware", "Super + /",                "Este cheatsheet"),
-    ("Wallpaper & Hardware", "Alt + W",                  "Alternar tablet (notebook ↔ HDMI)"),
+    # ── Apps ──
+    (r'^\$?(kitty|foot|alacritty|\$term)\b(?!.*-e)', "Apps", "Terminal"),
+    (r'app-goto\.sh "(?P<app>[^"]+)"', "Ir até o app", "{app} (vai até a workspace dele)"),
+    (r'app-here\.sh "(?P<app>[^"]+)"', "Apps", "{app} (traz pra workspace atual)"),
+    (r'^\$?(firefox|\$browser)\b',  "Apps", "Navegador"),
+    (r'rofi -show drun',            "Apps", "Launcher de apps"),
+    (r'rofi-rbw',                   "Apps", "Senhas (Bitwarden)"),
+    (r'xournalpp',                  "Apps", "Xournal++"),
+    (r'\bqgis\b',                   "Apps", "QGIS"),
+    (r'(nautilus|dolphin|thunar)',  "Apps", "Gerenciador de arquivos"),
 
-    # ── Screenshot ───────────────────────────────────────────────────
-    ("Screenshot",   "PrtSc",                      "Tela inteira → clipboard"),
-    ("Screenshot",   "Ctrl + PrtSc",               "Tela inteira → ~/Imagens"),
-    ("Screenshot",   "Shift + PrtSc",              "Selecionar área → clipboard"),
-    ("Screenshot",   "Ctrl + Shift + PrtSc",       "Selecionar área → ~/Imagens"),
+    # ── Sistema ──
+    (r'killactive',                 "Sistema", "Fechar janela"),
+    (r'hyprctl reload',             "Sistema", "Recarregar config"),
+    (r'^exit\b|dispatch exit',      "Sistema", "Sair do Hyprland"),
+    (r'show-keybinds',              "Sistema", "Este cheatsheet"),
 
-    # ── Navegação de foco ─────────────────────────────────────────────
-    ("Foco",         "Super + ← ↓ ↑ →",           "Mover foco (setas)"),
+    # ── Telas & Hardware ──
+    (r'settela',                    "Telas & Hardware", "SetTela: espelhar / ligar / posicionar monitores"),
+    (r'dpms on',                    "Telas & Hardware", "Religar telas (DPMS)"),
+    (r'dpms off',                   "Telas & Hardware", "Desligar telas (DPMS)"),
+    (r'tablet-toggle',              "Telas & Hardware", "Mesa digitalizadora: notebook ↔ HDMI"),
+    (r'(mywpp|next-wallpaper)( next)?$', "Telas & Hardware", "Próximo wallpaper"),
+    (r'(mywpp delete|kill-wallpaper)', "Telas & Hardware", "Remover wallpaper atual"),
+    (r'sync-dji',                   "Telas & Hardware", "Sincronizar DJI"),
 
-    # ── Mover janelas ─────────────────────────────────────────────────
-    ("Janelas",      "Super + Shift + H/J/K/L",    "Mover janela (vim)"),
-    ("Janelas",      "Super + Shift + ← ↓ ↑ →",   "Mover janela (setas)"),
-    ("Janelas",      "Super + F",                  "Tela cheia"),
-    ("Janelas",      "Super + Shift + Space",       "Alternar flutuante"),
-    ("Janelas",      "Super + P",                  "Pin (sempre visível)"),
-    ("Janelas",      "Super + R  →  H/J/K/L",      "Modo resize (Esc para sair)"),
-    ("Janelas",      "Super + drag LClick",         "Mover janela com mouse"),
-    ("Janelas",      "Super + drag RClick",         "Redimensionar com mouse"),
+    # ── Foco / Janelas ──
+    (r'movefocus',                  "Foco", "Mover foco"),
+    (r'movewindow"?$|movewindow "', "Janelas", "Mover janela"),
+    (r'^mouse movewindow',          "Janelas", "Arrastar janela"),
+    (r'^mouse resizewindow',        "Janelas", "Redimensionar janela"),
+    (r'fullscreen',                 "Janelas", "Tela cheia"),
+    (r'togglefloating',             "Janelas", "Alternar flutuante"),
+    (r'\bpin\b',                    "Janelas", "Pin (sempre visível)"),
+    (r'submap "?resize',            "Janelas", "Entrar no modo resize"),
+    (r'resizeactive',               "Modo resize (Super + R)", "Redimensionar"),
+    (r'submap "?reset',             "Modo resize (Super + R)", "Sair do modo resize"),
 
-    # ── Workspaces ───────────────────────────────────────────────────
-    ("Workspaces",   "Super + 1 … 9",              "Ir para workspace"),
-    ("Workspaces",   "Super + Shift + 1 … 8",      "Mover janela para workspace"),
-    ("Workspaces",   "Super + Shift + 9 / 0",      "Mover janela (silencioso)"),
-    ("Workspaces",   "Super + Scroll ↓↑",          "Workspace próx. / ant."),
+    # ── Workspaces / Scratchpad ──
+    (r'togglespecialworkspace',     "Scratchpad", "Mostrar / esconder scratchpad"),
+    (r'movetoworkspace "?special',  "Scratchpad", "Mandar janela pro scratchpad"),
+    (r'workspace "?e\+',            "Workspaces", "Próxima workspace"),
+    (r'workspace "?e-',             "Workspaces", "Workspace anterior"),
+    (r'movetoworkspacesilent',      "Workspaces", "Mandar janela (sem seguir)"),
+    (r'movetoworkspace',            "Workspaces", "Mandar janela e ir junto"),
+    (r'workspace',                  "Workspaces", "Ir para workspace"),
 
-    # ── Scratchpad ───────────────────────────────────────────────────
-    ("Scratchpad",   "Super + S",                  "Mostrar / esconder scratchpad"),
-    ("Scratchpad",   "Super + Shift + S",          "Enviar janela para scratchpad"),
+    # ── Screenshot ──
+    (r'grim -g .*wl-copy',          "Screenshot", "Área → clipboard"),
+    (r'grim -g ',                   "Screenshot", "Área → ~/Imagens"),
+    (r'grim - .*wl-copy',           "Screenshot", "Tela inteira → clipboard"),
+    (r'grim ',                      "Screenshot", "Tela inteira → ~/Imagens"),
 
-    # ── Mídia ────────────────────────────────────────────────────────
-    ("Mídia",        "Vol+ / Vol-",                "Volume +5% / -5%"),
-    ("Mídia",        "Mute",                       "Silenciar áudio"),
-    ("Mídia",        "MicMute",                    "Silenciar microfone"),
-    ("Mídia",        "Bright+ / Bright-",          "Brilho +10% / -10%"),
+    # ── Mídia ──
+    (r'set-volume .*\+',            "Mídia", "Volume +"),
+    (r'set-volume .*-',             "Mídia", "Volume −"),
+    (r'SINK@ toggle',               "Mídia", "Silenciar áudio"),
+    (r'SOURCE@ toggle',             "Mídia", "Silenciar microfone"),
+    (r'brightnessctl set \+',       "Mídia", "Brilho +"),
+    (r'brightnessctl set',          "Mídia", "Brilho −"),
+    (r'playerctl.*play',            "Mídia", "Play / pause"),
 ]
 
-# Binds que mudam conforme o layout ativo (hyprland-<layout>.conf)
-LAYOUT_KEYBINDS = {
-    "dwindle": [
-        ("Super + H / J / K / L",    "Mover foco (vim)"),
-        ("Super + Tab",              "Focar próxima janela"),
-        ("Super + E",                "Alternar split H/V"),
-        ("Super + Y",                "Pseudotile da janela"),
-    ],
-    "master": [
-        ("Super + H / J / K / L",    "Mover foco (vim)"),
-        ("Super + M",                "Trocar janela com o master"),
-        ("Super + U",                "Focar o master"),
-        ("Super + Tab / Shift+Tab",  "Ciclar pilha (próx / ant)"),
-        ("Super + , / .",            "Add / remover master"),
-        ("Super + E",                "Girar orientação"),
-        ("Super + Shift + M",        "Ciclo esquerda/centro/direita"),
-        ("Super + - / =",            "Encolher / crescer master"),
-    ],
-    "scrolling": [
-        ("Super + H / L",            "Coluna anterior / próxima"),
-        ("Super + J / K",            "Foco dentro da coluna"),
-        ("Super + M",                "Janela vira coluna própria"),
-        ("Super + Shift + M",        "Juntar / separar da coluna vizinha"),
-        ("Super + E / Shift + E",    "Fit visíveis / todas"),
-        ("Super + , / .",            "Trocar coluna ← / →"),
-        ("Super + Tab",              "Ciclar larguras de coluna"),
-        ("Super + - / =",            "Encolher / crescer coluna"),
-    ],
-    "monocle": [
-        ("Super + Tab / Shift+Tab",  "Próxima / anterior janela"),
-        ("Super + J/L  ·  K/H",      "Próxima  ·  anterior janela"),
-    ],
+# Nomes de app para app-here / app-goto (classe → nome legível)
+APPS = {
+    "md.obsidian.Obsidian": "Obsidian",
+    "net.ankiweb.Anki": "Anki",
+    "org.zotero.Zotero": "Zotero",
+    "org.mozilla.firefox": "Firefox",
+    "qgis": "QGIS",
 }
 
-def current_layout():
-    try:
-        out = subprocess.run(
-            ["hyprctl", "-j", "getoption", "general:layout"],
-            capture_output=True, text=True, timeout=2,
-        ).stdout
-        return json.loads(out).get("str", "")
-    except Exception:
-        return ""
+MODS = [(64, "Super"), (4, "Ctrl"), (8, "Alt"), (1, "Shift")]
 
-def build_lines(entries):
-    lines = []
-    current_section = None
-    for section, combo, desc in entries:
-        if section != current_section:
+KEYS = {
+    "return": "Enter", "space": "Espaço", "tab": "Tab", "escape": "Esc",
+    "slash": "/", "comma": ",", "period": ".", "minus": "-", "equal": "=",
+    "left": "←", "down": "↓", "up": "↑", "right": "→",
+    "print": "PrtSc", "mouse:272": "arrastar LClick",
+    "mouse:273": "arrastar RClick", "mouse_down": "Scroll ↓",
+    "mouse_up": "Scroll ↑",
+    "xf86audioraisevolume": "Vol+", "xf86audiolowervolume": "Vol−",
+    "xf86audiomute": "Mute", "xf86audiomicmute": "MicMute",
+    "xf86monbrightnessup": "Brilho+", "xf86monbrightnessdown": "Brilho−",
+    "xf86audioplay": "Play", "xf86audionext": "Next", "xf86audioprev": "Prev",
+}
+
+# Ordem natural das teclas dentro de uma linha agrupada
+KEY_ORDER = ["H", "J", "K", "L", "←", "↓", "↑", "→",
+             "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+
+# Nunca executa pelo menu: sair da sessão sem querer é caro demais
+NO_RUN = {"Sair do Hyprland", "Este cheatsheet"}
+
+TRACKER = re.compile(r"^\S*track_bind\.sh '[^']*' ")
+
+
+def command_of(bind):
+    """Comando efetivo de um bind, sem o wrapper do UsageTracker."""
+    if bind["dispatcher"] == "exec":
+        return TRACKER.sub("", bind["arg"])
+    if bind.get("mouse"):
+        return f"mouse {bind['arg']}"
+    return f"{bind['dispatcher']} {bind['arg']}".strip()
+
+
+def describe(cmd):
+    """(seção, descrição) do comando; cai em Outros com o comando cru."""
+    for pattern, section, desc in RULES:
+        m = re.search(pattern, cmd)
+        if m:
+            fields = {k: APPS.get(v, v) for k, v in m.groupdict().items()}
+            return section, desc.format(**fields)
+    short = cmd if len(cmd) <= 50 else cmd[:49] + "…"
+    return "Outros", short
+
+
+def key_name(key):
+    name = KEYS.get(key.lower())
+    if name:
+        return name
+    return key.upper() if len(key) == 1 else key
+
+
+def mods_name(mask):
+    return " + ".join(n for bit, n in MODS if mask & bit)
+
+
+def join_keys(keys):
+    """Junta teclas de uma linha: dígitos em sequência viram '1 … 0'."""
+    keys = sorted(set(keys), key=lambda k: (KEY_ORDER.index(k)
+                                            if k in KEY_ORDER else 99, k))
+    digits = [k for k in keys if k.isdigit()]
+    rest = [k for k in keys if not k.isdigit()]
+    if len(digits) > 2:
+        rest.append(f"{digits[0]} … {digits[-1]}")
+    else:
+        rest += digits
+    return " ".join(rest)
+
+
+def build_entries(binds, layout=""):
+    """Agrupa binds em [(seção, combo, descrição, bind_ou_None)].
+
+    Binds com mesma seção, descrição, modificadores e submap viram uma linha
+    só (h/j/k/l + setas, 1…0). Só linha de bind único guarda o bind, para o
+    Enter poder executar.
+    """
+    groups = {}
+    for b in binds:
+        section, desc = describe(command_of(b))
+        if section == "LAYOUT":
+            section = f"Layout: {layout}" if layout else "Layout"
+        key = (section, desc, b["modmask"], b.get("submap", ""))
+        groups.setdefault(key, []).append(b)
+
+    def order(item):
+        (section, desc, mask, _), members = item
+        base = "LAYOUT" if section.startswith("Layout") else section
+        return (SECTIONS.index(base) if base in SECTIONS else len(SECTIONS),
+                min(binds.index(m) for m in members))
+
+    entries = []
+    for (section, desc, mask, _), members in sorted(groups.items(), key=order):
+        keys = join_keys([key_name(m["key"]) for m in members])
+        combo = " + ".join(p for p in (mods_name(mask), keys) if p)
+        runnable = len(members) == 1 and desc not in NO_RUN
+        entries.append((section, combo, desc, members[0] if runnable else None))
+    return entries
+
+
+def build_lines(entries, width=46):
+    """Linhas do rofi e, em paralelo, o bind de cada linha (ou None)."""
+    lines, targets = [], []
+    current = None
+    for section, combo, desc, bind in entries:
+        if section != current:
             if lines:
                 lines.append("")
-            bar = "─" * max(1, 46 - len(section))
-            lines.append(f"  ── {section} {bar}")
-            current_section = section
-        lines.append(f"     {combo:<34}  {desc}")
-    return "\n".join(lines)
+                targets.append(None)
+            lines.append(f"  ── {section} " + "─" * max(1, width - len(section)))
+            targets.append(None)
+            current = section
+        mark = " " if bind else "·"
+        lines.append(f"   {mark} {combo:<32}  {desc}")
+        targets.append(bind)
+    return lines, targets
+
+
+def hyprctl_json(*args):
+    out = subprocess.run(["hyprctl", "-j", *args], capture_output=True,
+                         text=True, timeout=2).stdout
+    return json.loads(out)
+
+
+def run_bind(bind):
+    if bind.get("mouse"):
+        return
+    subprocess.run(["hyprctl", "dispatch", bind["dispatcher"], bind["arg"]],
+                   capture_output=True)
+
 
 def main():
-    layout = current_layout()
-    entries = list(KEYBINDS)
-    if layout in LAYOUT_KEYBINDS:
-        extra = [(f"Layout: {layout}", combo, desc)
-                 for combo, desc in LAYOUT_KEYBINDS[layout]]
-        # Insere logo depois da seção "Foco", junto da navegação
-        idx = max(i for i, e in enumerate(entries) if e[0] == "Foco") + 1
-        entries[idx:idx] = extra
-    text = build_lines(entries)
-    subprocess.run(
+    try:
+        binds = hyprctl_json("binds")
+    except Exception:
+        binds = []
+    try:
+        layout = hyprctl_json("getoption", "general:layout").get("str", "")
+    except Exception:
+        layout = ""
+
+    lines, targets = build_lines(build_entries(binds, layout))
+    if not lines:
+        lines = ["  (hyprctl não respondeu — sem binds para mostrar)"]
+    res = subprocess.run(
         [
-            "rofi", "-dmenu", "-p", "⌨  Keybinds", "-i",
-            "-no-custom",
+            "rofi", "-dmenu", "-i", "-no-custom", "-format", "i",
+            "-p", "⌨  Atalhos",
+            "-mesg", f"layout: {layout or '?'}  ·  Enter executa  ·  "
+                     "· = linha agrupada, só referência",
             "-theme-str",
             (
-                "window  { width: 50%; }"
-                "listview { lines: 18; }"
-                "entry   { placeholder: \" Filtrar…\"; }"
+                "window  { width: 55%; }"
+                "listview { lines: 20; }"
+                "entry   { placeholder: \" Filtrar (tecla ou ação)…\"; }"
                 "element-text { font: \"JetBrainsMono NF 9\"; }"
             ),
         ],
-        input=text,
-        text=True,
+        input="\n".join(lines), capture_output=True, text=True,
     )
+    choice = res.stdout.strip()
+    if res.returncode == 0 and choice.isdigit() and int(choice) < len(targets):
+        bind = targets[int(choice)]
+        if bind:
+            run_bind(bind)
+
 
 if __name__ == "__main__":
     main()
