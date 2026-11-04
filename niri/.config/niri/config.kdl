@@ -1,0 +1,361 @@
+// niri — sessão de teste com Noctalia (barra, launcher, notificações, lock).
+// Binds portados do Hyprland: o que tem equivalente ficou na mesma tecla;
+// o que é do master (swapwithmaster, addmaster...) virou o análogo em colunas.
+// Recarrega sozinho ao salvar. Ver tudo: Super+/ (overlay de atalhos).
+//
+// Mesmo arquivo no note e no PC. O que é de uma máquina só (monitor, escala,
+// mesa digitalizadora) fica no local.kdl, fora do git — incluído no fim.
+// Máquina nova: ./SetNiri.sh (na raiz do pacote niri do mydots).
+
+// --- Input ---
+input {
+    keyboard {
+        xkb {
+            layout "br"
+            model "thinkpad"
+        }
+    }
+
+    // Sem aceleração (movimento 1:1), igual ao Hyprland
+    touchpad {
+        tap
+        accel-profile "flat"
+    }
+
+    focus-follows-mouse
+}
+
+// --- Layout: colunas que rolam pro lado (não existe master no niri) ---
+// Duas janelas a 50% dão a cara de master/stack; Super+-/= ajusta a largura.
+layout {
+    // Igual ao Hyprland: 2 entre janelas, 6 na borda da tela (gaps + struts).
+    // O swap.py usa esses números — mudou aqui, muda lá.
+    gaps 2
+    struts {
+        left 4
+        right 4
+        top 4
+        bottom 4
+    }
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        off
+    }
+
+    border {
+        width 2
+        active-gradient from="#33ccffee" to="#00ff99ee" angle=45
+        inactive-color "#595959aa"
+    }
+
+    // Abas (Super+T): barrinha dentro da coluna, senão some no gap da borda
+    tab-indicator {
+        place-within-column
+        position "left"
+        width 6
+        gap 4
+        length total-proportion=1.0
+        active-gradient from="#33ccffee" to="#00ff99ee" angle=45
+        inactive-color "#595959aa"
+    }
+}
+
+// Overview (Super+Espaço): fundo liso
+overview {
+    backdrop-color "#26233a"
+}
+
+// Animações do Hyprland: bezier 0.05,0.9,0.1,1.05 (passa um tiquinho e volta), 300 ms
+animations {
+    window-open {
+        duration-ms 300
+        curve "cubic-bezier" 0.05 0.9 0.1 1.05
+    }
+    window-close {
+        duration-ms 300
+        curve "cubic-bezier" 0.05 0.9 0.1 1.05
+    }
+    window-movement {
+        duration-ms 300
+        curve "cubic-bezier" 0.05 0.9 0.1 1.05
+    }
+    window-resize {
+        duration-ms 300
+        curve "cubic-bezier" 0.05 0.9 0.1 1.05
+    }
+    workspace-switch {
+        duration-ms 300
+        curve "ease-out-cubic"
+    }
+}
+
+environment {
+    QT_QPA_PLATFORM "wayland;xcb"
+    // Sem prefer-no-csd o Qt desenharia a barra de título feia dele
+    QT_WAYLAND_DISABLE_WINDOWDECORATION "1"
+    PATH "/home/rud/.local/bin:/usr/local/bin:/usr/bin:/bin"
+}
+
+// --- Autostart ---
+// Barra, notificações, wallpaper, lock; o --daemon só volta com ela pronta pro mywpp
+spawn-sh-at-startup "noctalia --daemon && mywpp boot"
+spawn-at-startup "/home/rud/.config/niri/solo.py"    // Janela sozinha ocupa a tela toda
+spawn-at-startup "/home/rud/deving/desktop/SetTela/settela.sh" "--vigiar"  // Reaplica a config lembrada de monitores no hotplug
+spawn-at-startup "kitty" "-e" "att_diaria.sh"         // Janela de atualização diária do sistema
+spawn-sh-at-startup "wpctl set-mute @DEFAULT_AUDIO_SINK@ 1"  // Liga mutado (sala de aula)
+spawn-at-startup "hypridle" "-c" "/home/rud/.config/niri/hypridle.conf"  // Escurece, trava, apaga, suspende
+
+// SEM prefer-no-csd de propósito: as alças de resize pela borda (resize_on_border
+// do Hyprland) vêm da decoração do próprio app; com ele ligado elas somem.
+// Super+botão direito arrastando redimensiona em qualquer janela.
+screenshot-path "~/Imagens/Prints/%Y-%m-%d-%H%M%S_niri.png"
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+// --- Regras de janela ---
+window-rule {
+    geometry-corner-radius 8
+    clip-to-geometry true
+    // Borda por fora da janela, não um retângulo por trás
+    draw-border-with-background false
+}
+
+// Kitty: borda POR TRÁS de propósito — com o fundo transparente dele, o
+// gradiente turquesa→verde da borda tinge o terminal (cinza quando inativo)
+window-rule {
+    match app-id="^kitty$"
+    draw-border-with-background true
+}
+
+// Obsidian abre grande (era size 85% 85% no Hyprland)
+window-rule {
+    match app-id="^md\\.obsidian\\.Obsidian$"
+    default-column-width { proportion 0.85; }
+}
+
+// Picture-in-Picture nunca vira tela cheia (era suppressevent fullscreen)
+window-rule {
+    match title="^Picture-in-Picture$"
+    open-fullscreen false
+}
+
+// Opacidade: janelas inativas ficam com 80% para destacar a ativa
+window-rule {
+    match is-active=false
+    opacity 0.8
+}
+
+// Exceções sempre opacas (vêm depois, então sobrescrevem a regra acima)
+window-rule {
+    match app-id="^kitty$"
+    match title="YouTube"
+    match title="Meet"
+    match title="^Picture-in-Picture$"
+    match title="^Ligação do WhatsApp"
+    match app-id="wl_mirror"
+    opacity 1.0
+}
+
+// Firefox — diálogos de Salvar/Abrir: flutuantes, 80% da tela, no centro
+window-rule {
+    match app-id="^org\\.mozilla\\.firefox$" title="^(Salvar como|Abrir)"
+    open-floating true
+    default-column-width { proportion 0.8; }
+    default-window-height { proportion 0.8; }
+}
+
+// SetTela (Super+P): flutuante, abre centralizada
+window-rule {
+    match app-id="^rud\\.settela$"
+    open-floating true
+}
+
+// Janela de configurações da Noctalia: entra no tiling como qualquer outra
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating false
+}
+
+// Sem blur nas superfícies da Noctalia (economiza bateria, como no Hyprland)
+layer-rule {
+    match namespace="^noctalia-"
+    background-effect {
+        blur false
+    }
+}
+
+debug {
+    // Deixa as notificações da Noctalia ativarem janelas
+    honor-xdg-activation-with-invalid-serial
+}
+
+// Alt+Tab do niri (janelas por uso recente) só no Super; ter o bloco binds
+// apaga os padrões em Alt. Bind normal com a mesma tecla ganha deste aqui.
+recent-windows {
+    binds {
+        Mod+Tab         { next-window; }
+        Mod+Shift+Tab   { previous-window; }
+        Mod+grave       { next-window     filter="app-id"; }
+        Mod+Shift+grave { previous-window filter="app-id"; }
+    }
+}
+
+// --- Binds ---
+binds {
+    Mod+Slash hotkey-overlay-title="Esta cola de atalhos" { show-hotkey-overlay; }
+
+    // Apps (mesmas teclas do Hyprland)
+    Mod+Return hotkey-overlay-title="Terminal" { spawn "kitty"; }
+    Alt+Return hotkey-overlay-title="Firefox" { spawn "firefox"; }
+    // Alt+letra: traz o app pra cá (ou abre); Alt+Shift+letra: vai até onde ele está
+    Alt+V hotkey-overlay-title="Obsidian: trazer pra cá / abrir" { spawn "/home/rud/.config/niri/app.py" "here" "md.obsidian.Obsidian" "flatpak" "run" "md.obsidian.Obsidian"; }
+    Alt+A hotkey-overlay-title="Anki: trazer pra cá / abrir" { spawn "/home/rud/.config/niri/app.py" "here" "net.ankiweb.Anki" "flatpak" "run" "net.ankiweb.Anki"; }
+    Alt+Z hotkey-overlay-title="Zotero: trazer pra cá / abrir" { spawn "/home/rud/.config/niri/app.py" "here" "org.zotero.Zotero" "flatpak" "run" "org.zotero.Zotero"; }
+    Alt+G hotkey-overlay-title="QGIS: trazer pra cá / abrir" { spawn "/home/rud/.config/niri/app.py" "here" "qgis" "env" "QT_QPA_PLATFORM=xcb" "qgis"; }
+    Alt+Shift+Return hotkey-overlay-title="Ir até o app (Alt+Shift+Enter/V/A/Z/G)" { spawn "/home/rud/.config/niri/app.py" "goto" "org.mozilla.firefox" "firefox"; }
+    Alt+Shift+V hotkey-overlay-title=null { spawn "/home/rud/.config/niri/app.py" "goto" "md.obsidian.Obsidian" "flatpak" "run" "md.obsidian.Obsidian"; }
+    Alt+Shift+A hotkey-overlay-title=null { spawn "/home/rud/.config/niri/app.py" "goto" "net.ankiweb.Anki" "flatpak" "run" "net.ankiweb.Anki"; }
+    Alt+Shift+Z hotkey-overlay-title=null { spawn "/home/rud/.config/niri/app.py" "goto" "org.zotero.Zotero" "flatpak" "run" "org.zotero.Zotero"; }
+    Alt+Shift+G hotkey-overlay-title=null { spawn "/home/rud/.config/niri/app.py" "goto" "qgis" "env" "QT_QPA_PLATFORM=xcb" "qgis"; }
+    Mod+X hotkey-overlay-title="Xournal++" { spawn "flatpak" "run" "com.github.xournalpp.xournalpp"; }
+    Mod+B hotkey-overlay-title="Bitwarden (rofi-rbw)" { spawn "/home/rud/.local/bin/rofi-rbw"; }
+
+    // Wallpaper (mywpp, mesma fila do Hyprland)
+    Mod+W hotkey-overlay-title="Próximo wallpaper" { spawn "mywpp" "next"; }
+    Mod+Shift+W hotkey-overlay-title="Apagar wallpaper" { spawn "mywpp" "delete"; }
+
+    // Noctalia
+    Mod+D hotkey-overlay-title="Launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
+    Mod+N hotkey-overlay-title="Central de controle" { spawn-sh "noctalia msg panel-toggle control-center"; }
+    Mod+I hotkey-overlay-title="Configurações da Noctalia" { spawn-sh "noctalia msg settings-toggle"; }
+    Mod+A hotkey-overlay-title="Argos" { spawn-sh "noctalia msg panel-toggle matheus/argos:painel"; }
+    Mod+Escape hotkey-overlay-title="Bloquear tela" { spawn-sh "noctalia msg session lock"; }
+
+    // Janelas
+    Mod+Q hotkey-overlay-title="Fechar janela" repeat=false { close-window; }
+    Mod+F hotkey-overlay-title="Tela cheia" { fullscreen-window; }
+    Mod+M hotkey-overlay-title="Maximizar coluna" { maximize-column; }
+    Mod+Shift+Space hotkey-overlay-title="Janela flutuante" { toggle-window-floating; }
+    // Scratchpad (era special:magic no Hyprland): Super+S mostra/esconde, Super+Shift+S manda pra lá
+    Mod+S hotkey-overlay-title="Scratchpad: entrar / sair" { spawn "/home/rud/.config/niri/scratch.py" "toggle"; }
+    Mod+Shift+S hotkey-overlay-title="Scratchpad: mandar janela (de dentro, devolve)" { spawn "/home/rud/.config/niri/scratch.py" "send"; }
+    Mod+Space hotkey-overlay-title="Visão geral" repeat=false { toggle-overview; }
+
+    // "Master" em colunas: Super+U vai pra primeira coluna (era focusmaster),
+    // Alt+Tab circula (era cyclenext), Super+,/. empilha/desempilha na coluna
+    // (era addmaster/removemaster), Super+-/= é a largura (era mfact)
+    // Troca com a coluna do lado e a largura fica com o lado (o swap do master)
+    Mod+Ctrl+H hotkey-overlay-title="Trocar com a coluna da esquerda (ou Ctrl+←)" { spawn "/home/rud/.config/niri/swap.py" "left"; }
+    Mod+Ctrl+L hotkey-overlay-title="Trocar com a coluna da direita (ou Ctrl+→)" { spawn "/home/rud/.config/niri/swap.py" "right"; }
+    Mod+Ctrl+Left hotkey-overlay-title=null { spawn "/home/rud/.config/niri/swap.py" "left"; }
+    Mod+Ctrl+Right hotkey-overlay-title=null { spawn "/home/rud/.config/niri/swap.py" "right"; }
+    Mod+U hotkey-overlay-title="Ir pra primeira coluna" { focus-column-first; }
+    Alt+Tab hotkey-overlay-title="Próxima janela (circula, entra na pilha)" { spawn "/home/rud/.config/niri/cycle.py" "next"; }
+    Alt+Shift+Tab hotkey-overlay-title="Janela anterior (circula, entra na pilha)" { spawn "/home/rud/.config/niri/cycle.py" "prev"; }
+    Mod+Comma hotkey-overlay-title="Empilhar / desempilhar com a coluna da esquerda" { consume-or-expel-window-left; }
+    Mod+Period hotkey-overlay-title="Empilhar / desempilhar com a coluna da direita" { consume-or-expel-window-right; }
+    Mod+Minus hotkey-overlay-title="Coluna mais estreita" { set-column-width "-5%"; }
+    Mod+Equal hotkey-overlay-title="Coluna mais larga" { set-column-width "+5%"; }
+    Mod+R hotkey-overlay-title="Próxima largura predefinida" { switch-preset-column-width; }
+    Mod+C hotkey-overlay-title="Centralizar coluna" { center-column; }
+    Mod+T hotkey-overlay-title="Coluna em abas" { toggle-column-tabbed-display; }
+
+    // Foco (vim + setas)
+    Mod+H hotkey-overlay-title="Foco: coluna da esquerda (ou ←)" { focus-column-left; }
+    Mod+L hotkey-overlay-title="Foco: coluna da direita (ou →)" { focus-column-right; }
+    Mod+J hotkey-overlay-title="Foco: janela / workspace abaixo (ou ↓)" { focus-window-or-workspace-down; }
+    Mod+K hotkey-overlay-title="Foco: janela / workspace acima (ou ↑)" { focus-window-or-workspace-up; }
+    Mod+Left hotkey-overlay-title=null { focus-column-left; }
+    Mod+Right hotkey-overlay-title=null { focus-column-right; }
+    Mod+Down hotkey-overlay-title=null { focus-window-or-workspace-down; }
+    Mod+Up hotkey-overlay-title=null { focus-window-or-workspace-up; }
+
+    // Mover
+    Mod+Shift+H hotkey-overlay-title="Mover coluna pra esquerda (ou Shift+←)" { move-column-left; }
+    Mod+Shift+L hotkey-overlay-title="Mover coluna pra direita (ou Shift+→)" { move-column-right; }
+    Mod+Shift+J hotkey-overlay-title="Mover janela pra baixo / workspace abaixo (ou Shift+↓)" { move-window-down-or-to-workspace-down; }
+    Mod+Shift+K hotkey-overlay-title="Mover janela pra cima / workspace acima (ou Shift+↑)" { move-window-up-or-to-workspace-up; }
+    Mod+Shift+Left hotkey-overlay-title=null { move-column-left; }
+    Mod+Shift+Right hotkey-overlay-title=null { move-column-right; }
+    Mod+Shift+Down hotkey-overlay-title=null { move-window-down-or-to-workspace-down; }
+    Mod+Shift+Up hotkey-overlay-title=null { move-window-up-or-to-workspace-up; }
+
+    // Workspaces (no niri eles são verticais e dinâmicos)
+    Mod+1 hotkey-overlay-title="Ir pro workspace (Super+1…9, 0 = 10)" { focus-workspace 1; }
+    Mod+2 hotkey-overlay-title=null { focus-workspace 2; }
+    Mod+3 hotkey-overlay-title=null { focus-workspace 3; }
+    Mod+4 hotkey-overlay-title=null { focus-workspace 4; }
+    Mod+5 hotkey-overlay-title=null { focus-workspace 5; }
+    Mod+6 hotkey-overlay-title=null { focus-workspace 6; }
+    Mod+7 hotkey-overlay-title=null { focus-workspace 7; }
+    Mod+8 hotkey-overlay-title=null { focus-workspace 8; }
+    Mod+9 hotkey-overlay-title=null { focus-workspace 9; }
+    Mod+0 hotkey-overlay-title=null { focus-workspace 10; }
+    Mod+Shift+1 hotkey-overlay-title="Mandar coluna pro workspace (Super+Shift+número; 9 e 0 sem seguir)" { move-column-to-workspace 1; }
+    Mod+Shift+2 hotkey-overlay-title=null { move-column-to-workspace 2; }
+    Mod+Shift+3 hotkey-overlay-title=null { move-column-to-workspace 3; }
+    Mod+Shift+4 hotkey-overlay-title=null { move-column-to-workspace 4; }
+    Mod+Shift+5 hotkey-overlay-title=null { move-column-to-workspace 5; }
+    Mod+Shift+6 hotkey-overlay-title=null { move-column-to-workspace 6; }
+    Mod+Shift+7 hotkey-overlay-title=null { move-column-to-workspace 7; }
+    Mod+Shift+8 hotkey-overlay-title=null { move-column-to-workspace 8; }
+    Mod+Shift+9 hotkey-overlay-title=null { move-column-to-workspace 9 focus=false; }   // "silent", igual ao Hyprland
+    Mod+Shift+0 hotkey-overlay-title=null { move-column-to-workspace 10 focus=false; }
+    // Roda do mouse: Super+roda anda pelas colunas (na horizontal), Super+Shift+roda
+    // troca de workspace. Inclinar a roda / dois dedos de lado também anda nas colunas.
+    Mod+WheelScrollDown hotkey-overlay-title="Coluna da direita / esquerda (Super+roda)" { focus-column-right; }
+    Mod+WheelScrollUp hotkey-overlay-title=null { focus-column-left; }
+    Mod+WheelScrollRight hotkey-overlay-title=null { focus-column-right; }
+    Mod+WheelScrollLeft hotkey-overlay-title=null { focus-column-left; }
+    Mod+Shift+WheelScrollDown hotkey-overlay-title="Workspace abaixo / acima (Super+Shift+roda)" cooldown-ms=150 { focus-workspace-down; }
+    Mod+Shift+WheelScrollUp hotkey-overlay-title=null cooldown-ms=150 { focus-workspace-up; }
+
+    // Prints (mesmos do Hyprland) + o seletor nativo do niri no Super+Print
+    Print hotkey-overlay-title="Print da tela → área de transferência" { spawn-sh "grim - | wl-copy"; }
+    Ctrl+Print hotkey-overlay-title="Print da tela → ~/Imagens/Prints" { spawn-sh "grim ~/Imagens/Prints/$(date +'%Y-%m-%d-%H%M%S_niri.png')"; }
+    Shift+Print hotkey-overlay-title="Print de área → área de transferência" { spawn-sh "grim -g \"$(slurp)\" - | wl-copy"; }
+    Ctrl+Shift+Print hotkey-overlay-title="Print de área → ~/Imagens" { spawn-sh "grim -g \"$(slurp)\" ~/Imagens/$(date +'%Y-%m-%d-%H%M%S_niri.png')"; }
+    Mod+Print hotkey-overlay-title="Seletor de print do niri" { screenshot; }
+
+    // Áudio e brilho pela Noctalia (mostra o OSD)
+    XF86AudioRaiseVolume hotkey-overlay-title=null allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
+    XF86AudioLowerVolume hotkey-overlay-title=null allow-when-locked=true { spawn-sh "noctalia msg volume-down"; }
+    XF86AudioMute hotkey-overlay-title=null allow-when-locked=true { spawn-sh "noctalia msg volume-mute"; }
+    XF86AudioMicMute hotkey-overlay-title=null allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+    XF86MonBrightnessUp hotkey-overlay-title=null allow-when-locked=true { spawn-sh "noctalia msg brightness-up"; }
+    XF86MonBrightnessDown hotkey-overlay-title=null allow-when-locked=true { spawn-sh "noctalia msg brightness-down"; }
+
+    // Volume só da janela focada (Super + teclas de volume) e mixer por app (Super+V)
+    Mod+XF86AudioRaiseVolume hotkey-overlay-title="Volume da janela focada (Super+teclas de volume)" { spawn "/home/rud/.config/niri/vol-janela.sh" "up"; }
+    Mod+XF86AudioLowerVolume hotkey-overlay-title=null { spawn "/home/rud/.config/niri/vol-janela.sh" "down"; }
+    Mod+XF86AudioMute hotkey-overlay-title=null { spawn "/home/rud/.config/niri/vol-janela.sh" "mute"; }
+    Mod+V hotkey-overlay-title="Mixer por app" { spawn "/home/rud/.config/niri/vol-janela.sh" "menu"; }
+
+    // Mesa digitalizadora: notebook → monitor externo → os dois
+    Alt+W hotkey-overlay-title="Mesa digitalizadora: trocar de tela" { spawn "/home/rud/.config/niri/tablet.py"; }
+
+    // Monitores / projetor: espelhar, estender, posicionar (SetTela)
+    Mod+P hotkey-overlay-title="Monitores e projetor (SetTela)" { spawn "/home/rud/deving/desktop/SetTela/settela.sh"; }
+
+    // Tela que não volta do DPMS (bug de resume do note)
+    Mod+Shift+P hotkey-overlay-title="Religar a tela (quando não volta do DPMS)" { power-on-monitors; }
+
+    Mod+Shift+C hotkey-overlay-title="Recarregar a config (já recarrega ao salvar)" { spawn "niri" "msg" "action" "load-config-file"; }
+    Mod+Shift+E hotkey-overlay-title="Sair do niri" { quit; }
+}
+
+// Por máquina (monitor, escala, mesa): local.kdl, fora do git. Fica no fim pra
+// valer por cima do que tem aqui. Modelos: local.note.kdl e local.pc.kdl.
+include optional=true "local.kdl"
+// Tela da mesa digitalizadora escolhida no Alt+W (tablet.py reescreve; vale por cima do local.kdl)
+include optional=true "tablet.kdl"
