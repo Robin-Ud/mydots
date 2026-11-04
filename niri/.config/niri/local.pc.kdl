@@ -1,0 +1,11 @@
+// Modelo do PC (NVIDIA) — o SetNiri.sh copia pra local.kdl (fora do git).
+// Ajuste o monitor: `niri msg outputs` mostra nome, modos e escala.
+
+// output "DP-1" {
+//     mode "2560x1440@165"
+//     scale 1.0
+//     variable-refresh-rate on-demand=true
+// }
+
+// Suspender sozinho não precisa de nada aqui: o hypridle.conf só suspende
+// em máquina com bateria, então no PC ele escurece, trava e apaga a tela.
