@@ -1,0 +1,302 @@
+config_version = 16
+
+[bar.default]
+end = [
+    "clipboard",
+    "bluetooth",
+    "network",
+    "volume",
+    "brightness",
+    "battery",
+    "matheus/argos:widget",
+    "control-center",
+    "session"
+]
+scale = 1.2000000104308128
+start = [ "launcher", "workspaces", "media" ]
+thickness = 45
+widget_spacing = 20
+
+[calendar]
+enabled = true
+
+    [calendar.account.personal_google]
+    type = "google"
+
+[control_center.calendar]
+show_week_numbers = true
+
+[desktop_widgets]
+schema_version = 2
+widget_order = [
+    "desktop-widget-0000000000000001",
+    "desktop-widget-0000000000000004",
+    "desktop-widget-0000000000000005",
+    "desktop-widget-0000000000000007",
+    "desktop-widget-0000000000000009",
+    "desktop-widget-000000000000000a"
+]
+
+    [desktop_widgets.grid]
+    cell_size = 8
+    major_interval = 4
+    visible = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000001]
+    box_height = 224.0
+    box_width = 320.0
+    cx = 192.0
+    cy = 200.0
+    output = "eDP-1"
+    placement_height = 960.0
+    placement_width = 1536.0
+    rotation = 0.0
+    type = "weather"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000001.settings]
+        background = false
+        background_color = "surface"
+        background_opacity = 0.8
+        background_padding = 10
+        background_radius = 12
+        color = "on_surface"
+        font_family = ""
+        forecast_days = 3
+        shadow = true
+        show_forecast = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000004]
+    box_height = 160.0
+    box_width = 320.0
+    cx = 192.0
+    cy = 848.0
+    output = "eDP-1"
+    placement_height = 960.0
+    placement_width = 1536.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000004.settings]
+        background = true
+        bands = 40
+        centered = false
+        color_1 = "#FF0029"
+        color_2 = "#5000FF"
+        mirrored = false
+        reversed = false
+        show_wave = false
+        show_when_idle = false
+
+    [desktop_widgets.widget.desktop-widget-0000000000000005]
+    box_height = 104.0
+    box_width = 88.0
+    cx = 1448.0
+    cy = 332.0
+    output = "eDP-1"
+    placement_height = 960.0
+    placement_width = 1536.0
+    rotation = 0.0
+    type = "sticker"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000005.settings]
+        background = false
+        image_path = "/home/rud/Imagens/stickers/tux.svg"
+        opacity = 1.0
+
+    [desktop_widgets.widget.desktop-widget-0000000000000007]
+    box_height = 96.0
+    box_width = 96.0
+    cx = 1448.0
+    cy = 464.0
+    output = "eDP-1"
+    placement_height = 960.0
+    placement_width = 1536.0
+    rotation = 0.0
+    type = "sticker"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000007.settings]
+        background = false
+        image_path = "/home/rud/Imagens/stickers/fedora.webp"
+        opacity = 1.0
+
+    [desktop_widgets.widget.desktop-widget-0000000000000009]
+    box_height = 40.0
+    box_width = 120.0
+    cx = 1448.0
+    cy = 564.0
+    output = "eDP-1"
+    placement_height = 960.0
+    placement_width = 1536.0
+    rotation = 0.0
+    type = "sticker"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000009.settings]
+        background = false
+        image_path = "/home/rud/Imagens/stickers/niri.svg"
+        opacity = 1.0
+
+    [desktop_widgets.widget.desktop-widget-000000000000000a]
+    box_height = 96.0
+    box_width = 96.0
+    cx = 1448.0
+    cy = 664.0
+    output = "eDP-1"
+    placement_height = 960.0
+    placement_width = 1536.0
+    rotation = 0.0
+    type = "sticker"
+
+        [desktop_widgets.widget.desktop-widget-000000000000000a.settings]
+        background = false
+        image_path = "/home/rud/Imagens/stickers/rust-orange.svg"
+        opacity = 1.0
+
+[dock]
+auto_hide = true
+cross_axis_padding = 10
+enabled = true
+icon_size = 45
+item_spacing = 4
+launcher_icon = "home-2"
+launcher_position = "start"
+layer = "overlay"
+main_axis_padding = 14
+margin_edge = 7
+position = "top"
+radius = 80
+radius_top_left = 25
+radius_top_right = 25
+reserve_space = false
+show_dots = true
+show_instance_count = false
+
+[hot_corners]
+enabled = true
+
+[idle]
+behavior_order = [ "lock", "screen-off", "lock-and-suspend" ]
+pre_action_fade_seconds = 5
+
+    [idle.behavior.lock]
+    action = "lock"
+    enabled = false
+    timeout = 120.0
+
+    [idle.behavior.lock-and-suspend]
+    action = "lock_and_suspend"
+    enabled = false
+    timeout = 400.0
+
+    [idle.behavior.screen-off]
+    action = "screen_off"
+    enabled = false
+    timeout = 300.0
+
+[location]
+auto_locate = false
+address = "Piracicaba, SP, Brasil"
+
+[lockscreen]
+fingerprint = false
+
+[lockscreen_widgets]
+enabled = false
+schema_version = 2
+widget_order = [ "lockscreen-login-box@eDP-1" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 768.0
+    cy = 480.0
+    output = "eDP-1"
+    placement_height = 960.0
+    placement_width = 1536.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@eDP-1".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 32.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 20.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+[nightlight]
+enabled = true
+force = true
+temperature_day = 4500
+temperature_night = 4200
+
+[plugins]
+enabled = [ "matheus/argos" ]
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/official-plugins"
+    name = "official"
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/community-plugins"
+    name = "community"
+
+    [[plugins.source]]
+    kind = "path"
+    location = "/home/rud/deving/argos/noctalia"
+    name = "argos"
+
+[shell]
+# Janela de senha quando app gráfico pede sudo (no lugar do lxpolkit do Hyprland)
+polkit_agent = true
+corner_radius_scale = 1.700000025331974
+font_family = "JetBrains Mono"
+telemetry_enabled = true
+
+    [shell.launcher]
+    default_view = "categories"
+
+    [shell.panel]
+    launcher_placement = "attached"
+    wallpaper_placement = "floating"
+
+    [shell.screen_corners]
+    enabled = true
+
+[theme]
+builtin = "Noctalia"
+mode = "dark"
+source = "wallpaper"
+wallpaper_scheme = "faithful"
+
+[wallpaper]
+directory = "/home/rud/Imagens/wallpapers"
+edge_smoothness = 0.47999998927116394
+transition_on_startup = true
+
+    [wallpaper.automation]
+    enabled = true
+    interval_seconds = 600
+
+    [wallpaper.default]
+    path = "/home/rud/Imagens/wallpapers/dji_fly_20260607_114848_0132_1780844278359_photo_beautify.jpg"
+
+
+
+[widget.network]
+show_label = false
