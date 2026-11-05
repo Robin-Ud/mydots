@@ -18,9 +18,23 @@
   "editor.cursorSurroundingLines": 5,
   "editor.renderWhitespace": "trailing",
 
-  // --- Interface -------------------------------------------------------
+  // --- Interface: só o editor na tela ---------------------------------
+  // O resto chama por atalho: Ctrl+Shift+P (tudo), Ctrl+P (arquivo),
+  // Ctrl+B (barra lateral), Ctrl+Shift+E/F/G (arquivos/busca/git),
+  // Alt (menu), Ctrl+' (terminal).
   "workbench.startupEditor": "none",
   "workbench.tips.enabled": false,
+  "workbench.activityBar.location": "hidden",
+  "workbench.layoutControl.enabled": false,
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
+  "window.commandCenter": false,
+  "window.menuBarVisibility": "toggle",
+  "breadcrumbs.enabled": false,
+  "editor.stickyScroll.enabled": false,
+  "editor.inlayHints.enabled": "offUnlessPressed",
+  // Copilot e o chat embutido do VS Code (o Claude Code é outra extensão)
+  "chat.disableAIFeatures": true,
+  "chat.commandCenter.enabled": false,
   "telemetry.telemetryLevel": "off",
   "terminal.integrated.defaultProfile.linux": "bash",
 
