@@ -26,6 +26,37 @@ noremap ç l
 nnoremap h m`o<Esc>``
 nnoremap H m`O<Esc>``
 
-" Espaço+w salva; Espaço+y no visual copia as linhas pro clipboard
+" Espaço+w salva
 nnoremap <Space>w :w<CR>
+
+" --- Clipboard compartilhado (só no vim-enhanced) ----------------------
+" Nenhum vim do Fedora tem +clipboard, então vai por wl-copy/wl-paste:
+"   y      -> também vai pro clipboard (cola com Ctrl+V em qualquer app)
+"   p / P  -> se você deu Ctrl+C em outro app desde o último p, cola isso;
+"             senão cola o registro normal (ddp continua trocando linhas)
+" O vim-minimal pula tudo entre `if 1` e `endif`; lá Espaço+y copia linhas.
 vnoremap <Space>y :w !wl-copy<CR><CR>
+if 1
+  let g:clip_visto = ''
+  function! s:Copia() abort
+    if v:event.operator ==# 'y' && v:event.regname ==# ''
+      let g:clip_visto = @"
+      call system('wl-copy', @")
+    endif
+  endfunction
+  function! s:PuxaClip() abort
+    let l:c = system('wl-paste -n 2>/dev/null')
+    if v:shell_error == 0 && l:c !=# '' && l:c !=# g:clip_visto
+      let g:clip_visto = l:c
+      call setreg('"', l:c, l:c =~# "\n$" ? 'l' : 'c')
+    endif
+    return ''
+  endfunction
+  augroup clip_wayland
+    autocmd!
+    autocmd TextYankPost * call s:Copia()
+  augroup END
+  nnoremap <silent> <expr> p <SID>PuxaClip() . 'p'
+  nnoremap <silent> <expr> P <SID>PuxaClip() . 'P'
+  xnoremap <silent> <expr> p <SID>PuxaClip() . 'p'
+endif
