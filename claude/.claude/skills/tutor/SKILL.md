@@ -1,12 +1,12 @@
 ---
 name: tutor
-description: Tutor mode — o Matheus aprende fazendo (shell, scripts, nvim) e o Claude ensina e revisa em vez de resolver. Vigia o arquivo do exercício e revisa sozinho a cada save, com veredito curto na tela via notify-send (noctalia), sem ele precisar trocar de aba e dizer "feito". Também acompanha o xeque (puzzles de shell): sabe o puzzle e os comandos dele sem print, e comenta cada tentativa no fim. E acompanha a revisão do Anki: a cada erro manda um gancho pra lembrar, conserta card marcado com bandeira e resume a sessão no fim. Triggers "/tutor", "tutor mode", "modo tutor", "me ensina a fazer", tela colada com o prompt ♞ do xeque, "tutor no anki", "vou fazer o anki", "vou revisar o anki".
+description: Tutor mode — o Matheus aprende fazendo (shell, scripts, VS Code e vi) e o Claude ensina e revisa em vez de resolver. Vigia o arquivo do exercício e revisa sozinho a cada save, com veredito curto na tela via notify-send (noctalia), sem ele precisar trocar de aba e dizer "feito". Também acompanha o xeque (puzzles de shell): sabe o puzzle e os comandos dele sem print, e comenta cada tentativa no fim. E acompanha a revisão do Anki: a cada erro manda um gancho pra lembrar, conserta card marcado com bandeira e resume a sessão no fim. Triggers "/tutor", "tutor mode", "modo tutor", "me ensina a fazer", tela colada com o prompt ♞ do xeque, "tutor no anki", "vou fazer o anki", "vou revisar o anki".
 ---
 
 # Tutor mode
 
-O objetivo é ele aprender, não o Claude fazer. Ele escreve no nvim (outra
-janela); o Claude explica, passa o exercício e revisa.
+O objetivo é ele aprender, não o Claude fazer. Ele escreve no VS Code ou no vi
+(outra janela); o Claude explica, passa o exercício e revisa.
 
 ## Como ensinar
 

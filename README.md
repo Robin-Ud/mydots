@@ -7,7 +7,7 @@ aparece na home, e o `stow` cria os symlinks.
 ```bash
 git clone https://github.com/Robin-Ud/mydots ~/.mydots
 cd ~/.mydots
-stow niri kitty nvim     # só os pacotes que quiser
+stow niri kitty vscode   # só os pacotes que quiser
 stow -R niri             # refaz os links depois de criar arquivo novo no pacote
 ```
 
@@ -21,7 +21,8 @@ só um link para cá.
 | `niri` | niri, o desktop (binds e jeito do Hyprland; detalhes abaixo) |
 | `noctalia` | barra, launcher, notificações, tela de bloqueio e agente de senha (polkit) |
 | `kitty` | terminal |
-| `nvim` | `init.lua` com lazy.nvim e o `lazy-lock.json` |
+| `vscode` | `settings.json`, `keybindings.json` e `extensions.txt` do VS Code (abaixo) |
+| `vim` | `.vimrc` do `vi`, pras edições rápidas |
 | `bash` | `.bashrc` comentado; os scripts que ele chama ficam em `~/.config/bash/` (logo pokémon, `settempcom.sh`, grifos do Zotero) junto com os testes |
 | `blesh` | config do [ble.sh](https://github.com/akinomyoga/ble.sh) (autossugestão e realce no bash) |
 | `starship` | prompt |
@@ -57,14 +58,30 @@ git clone https://github.com/Robin-Ud/mydots ~/.mydots
   `scratch.py` é o scratchpad.
 - Testes: `python3 <script>_test.py` em `niri/.config/niri` e `bash SetNiri_test.sh`.
 
-## Hyprland, sway e companhia (arquivados)
+## Editor: VS Code + vi
+
+Projeto ou pasta abre no VS Code (`code .`); arquivo solto, commit e config
+rápida vão no `vi` (`$EDITOR`). O nvim foi aposentado em nov/2026.
+
+- **Mesmos dedos nos dois:** movimento em `jklç`, `h`/`H` abre linha embaixo/em
+  cima sem sair do modo normal, `Espaço+w` salva. No VS Code isso vem da extensão
+  Vim; `Alt+M` salva e roda o arquivo com o `tcd` no terminal integrado.
+- **O `vi` do Fedora é o vim-minimal** (sem eval, syntax nem clipboard), então o
+  `.vimrc` só tem `set` e `map`. `Espaço+y` no visual copia via `wl-copy`.
+- **Extensões:** `xargs -n1 code --install-extension < vscode/.config/Code/User/extensions.txt`;
+  depois de instalar/remover alguma, `code --list-extensions > vscode/.config/Code/User/extensions.txt`.
+- **Máquina nova:** crie `~/.config/Code/User` antes do `stow vscode` (o `SetNiri.sh`
+  já faz), senão o stow linka a pasta `~/.config/Code` inteira e o VS Code passa
+  a gravar cache dentro do repo.
+
+## Arquivados: Hyprland, nvim e companhia
 
 O Hyprland (com waybar, wofi, hyprpaper, `show-keybinds` e os 4 `.conf` de layout),
-o sway, o foot e o swaylock saíram do repo em nov/2026. O último estado está na tag
-`hyprland-final`:
+o sway, o foot, o swaylock e o nvim saíram do repo em nov/2026. O último estado de
+todos está na branch `morto` (a tag `hyprland-final` é o mesmo Hyprland, sem o nvim novo):
 
 ```bash
-git checkout hyprland-final -- hypr waybar   # traz de volta só o que quiser
+git checkout morto -- nvim hypr   # traz de volta só o que quiser
 ```
 
 ## Scripts (`scripts/.local/bin`)

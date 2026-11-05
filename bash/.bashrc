@@ -35,7 +35,7 @@ fi
 export PATH
 
 # Editor padrão para o terminal (git commit, etc.)
-export EDITOR=nvim
+export EDITOR=vi
 
 # NPM: usa pastas corretas em vez de criar lixo na home
 export NPM_CONFIG_USERCONFIG="$HOME/.config/npm/npmrc"

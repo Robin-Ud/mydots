@@ -18,7 +18,7 @@ NOCTALIA_REPO="https://github.com/noctalia-dev/noctalia-shell"
 NOCTALIA_COMMIT="125a30d"                # mesma versão do note (2026-10-26)
 NOCTALIA_SRC="$HOME/deving/disposable/noctalia"
 # Pacotes do mydots que vão pro stow
-STOW_PKGS=(niri noctalia fastfetch kitty rofi scripts nvim starship bash blesh bk rbw)
+STOW_PKGS=(niri noctalia fastfetch kitty rofi scripts vscode vim starship bash blesh bk rbw)
 PENDENTE=()
 
 DRY=""
@@ -150,6 +150,8 @@ links() {
     local pkg
     for pkg in "${STOW_PKGS[@]}"; do
         [ -d "$MYDOTS/$pkg" ] || continue
+        # sem a pasta real, o stow linkaria ~/.config/Code inteira pro repo
+        [ "$pkg" = vscode ] && run mkdir -p "$HOME/.config/Code/User"
         if stow -d "$MYDOTS" -t "$HOME" -n "$pkg" 2>/dev/null; then
             run stow -d "$MYDOTS" -t "$HOME" "$pkg"
         else
