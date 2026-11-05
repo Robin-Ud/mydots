@@ -35,7 +35,7 @@ fi
 export PATH
 
 # Editor padrão para o terminal (git commit, etc.)
-export EDITOR=vi
+command -v vim >/dev/null && export EDITOR=vim || export EDITOR=vi   # vim-enhanced tem o clipboard do .vimrc
 
 # NPM: usa pastas corretas em vez de criar lixo na home
 export NPM_CONFIG_USERCONFIG="$HOME/.config/npm/npmrc"
