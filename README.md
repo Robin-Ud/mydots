@@ -66,8 +66,11 @@ rápida vão no `vi` (`$EDITOR`). O nvim foi aposentado em nov/2026.
 - **Mesmos dedos nos dois:** movimento em `jklç`, `h`/`H` abre linha embaixo/em
   cima sem sair do modo normal, `Espaço+w` salva. No VS Code isso vem da extensão
   Vim; `Alt+M` salva e roda o arquivo com o `tcd` no terminal integrado.
-- **O `vi` do Fedora é o vim-minimal** (sem eval, syntax nem clipboard), então o
-  `.vimrc` só tem `set` e `map`. `Espaço+y` no visual copia via `wl-copy`.
+- **Clipboard:** nenhum vim do Fedora tem `+clipboard`, então o `.vimrc` faz por
+  `wl-copy`/`wl-paste`: `y` vai pro clipboard e `p` cola o último Ctrl+C de outro
+  app (se não teve Ctrl+C novo, cola o registro normal e o `ddp` segue valendo).
+  Precisa do `vim-enhanced` (`sudo dnf install vim-enhanced`; o Fedora já faz
+  `alias vi=vim`). O `vi` mínimo pula esse bloco e fica só com `Espaço+y`.
 - **Extensões:** `xargs -n1 code --install-extension < vscode/.config/Code/User/extensions.txt`;
   depois de instalar/remover alguma, `code --list-extensions > vscode/.config/Code/User/extensions.txt`.
 - **Máquina nova:** crie `~/.config/Code/User` antes do `stow vscode` (o `SetNiri.sh`
