@@ -1,7 +1,8 @@
 {
   // --- Salvar ----------------------------------------------------------
-  "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 3000,
+  // Salva ao trocar de janela/aba, não no meio da digitação (o vigia do
+  // tutor revisa a cada save).
+  "files.autoSave": "onFocusChange",
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
 
