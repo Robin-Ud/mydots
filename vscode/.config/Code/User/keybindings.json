@@ -1,0 +1,20 @@
+[
+  // Alt+M: salva e roda o arquivo com o tcd no terminal integrado
+  // (o mesmo Alt+M do nvim antigo).
+  {
+    "key": "alt+m",
+    "command": "runCommands",
+    "when": "editorTextFocus",
+    "args": {
+      "commands": [
+        "workbench.action.files.save",
+        {
+          "command": "workbench.action.terminal.sendSequence",
+          "args": { "text": "tcd '${file}'\u000D" }
+        }
+      ]
+    }
+  },
+  // Ctrl+' : abre/fecha o terminal integrado
+  { "key": "ctrl+'", "command": "workbench.action.terminal.toggleTerminal" }
+]

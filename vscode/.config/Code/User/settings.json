@@ -1,0 +1,75 @@
+{
+  // --- Salvar ----------------------------------------------------------
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 3000,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  // --- Editor (o mesmo jeito do antigo init.lua do nvim) ---------------
+  "editor.lineNumbers": "relative",
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.wordWrap": "on",
+  "editor.wrappingIndent": "same",
+  "editor.fontFamily": "monospace",
+  "editor.fontSize": 14,
+  "editor.minimap.enabled": false,
+  "editor.cursorSurroundingLines": 5,
+  "editor.renderWhitespace": "trailing",
+
+  // --- Interface -------------------------------------------------------
+  "workbench.startupEditor": "none",
+  "workbench.tips.enabled": false,
+  "telemetry.telemetryLevel": "off",
+  "terminal.integrated.defaultProfile.linux": "bash",
+
+  // --- Python ----------------------------------------------------------
+  "python.analysis.typeCheckingMode": "basic",
+
+  // --- Claude Code -----------------------------------------------------
+  "claudeCode.preferredLocation": "panel",
+  "claudeCode.hideOnboarding": true,
+
+  // --- Vim (VSCodeVim) -------------------------------------------------
+  // Movimento em jklç (o h vira "linha nova embaixo sem sair do normal"),
+  // igual ao nvim antigo e ao ~/.vimrc do vi.
+  "vim.leader": "<space>",
+  "vim.useSystemClipboard": true,
+  "vim.hlsearch": true,
+  "vim.incsearch": true,
+  "vim.smartcase": true,
+  // Deixa os atalhos do VSCode passarem: Ctrl+P (abrir arquivo),
+  // Ctrl+B (barra lateral), Ctrl+J (painel), Ctrl+F (buscar).
+  "vim.handleKeys": {
+    "<C-p>": false,
+    "<C-b>": false,
+    "<C-j>": false,
+    "<C-f>": false
+  },
+  "vim.normalModeKeyBindingsNonRecursive": [
+    { "before": ["j"], "after": ["h"] },
+    { "before": ["k"], "after": ["j"] },
+    { "before": ["l"], "after": ["k"] },
+    { "before": ["ç"], "after": ["l"] },
+    { "before": ["h"], "after": ["m", "z", "o", "<Esc>", "`", "z"] },
+    { "before": ["H"], "after": ["m", "z", "O", "<Esc>", "`", "z"] },
+    { "before": ["<leader>", "w"], "commands": ["workbench.action.files.save"] },
+    { "before": ["K"], "commands": ["editor.action.showHover"] },
+    { "before": ["<leader>", "c", "a"], "commands": ["editor.action.quickFix"] },
+    { "before": ["<leader>", "f"], "commands": ["editor.action.formatDocument"] },
+    { "before": ["<leader>", "e"], "commands": ["workbench.view.explorer"] },
+    { "before": ["<leader>", "p"], "commands": ["workbench.action.quickOpen"] }
+  ],
+  "vim.visualModeKeyBindingsNonRecursive": [
+    { "before": ["j"], "after": ["h"] },
+    { "before": ["k"], "after": ["j"] },
+    { "before": ["l"], "after": ["k"] },
+    { "before": ["ç"], "after": ["l"] }
+  ],
+  "vim.operatorPendingModeKeyBindingsNonRecursive": [
+    { "before": ["j"], "after": ["h"] },
+    { "before": ["k"], "after": ["j"] },
+    { "before": ["l"], "after": ["k"] },
+    { "before": ["ç"], "after": ["l"] }
+  ]
+}
