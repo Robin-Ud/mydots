@@ -24,7 +24,7 @@
   // Alt (menu), Ctrl+' (terminal).
   "workbench.startupEditor": "none",
   "workbench.tips.enabled": false,
-  "workbench.activityBar.location": "hidden",
+  "workbench.activityBar.location": "default",
   "workbench.layoutControl.enabled": false,
   "workbench.secondarySideBar.defaultVisibility": "hidden",
   "window.commandCenter": false,
