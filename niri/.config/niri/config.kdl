@@ -361,6 +361,10 @@ binds {
     // Monitores / projetor: espelhar, estender, posicionar (SetTela)
     Mod+P hotkey-overlay-title="Monitores e projetor (SetTela)" { spawn "/home/rud/deving/desktop/SetTela/settela.sh"; }
 
+    // Ditado por voz (whisper.cpp local): aperta, fala, aperta de novo
+    Mod+Z hotkey-overlay-title="Ditado: gravar / transcrever" repeat=false { spawn "/home/rud/deving/desktop/Ditado/ditado.sh"; }
+    Mod+Shift+Z hotkey-overlay-title="Ditado: cancelar" repeat=false { spawn "/home/rud/deving/desktop/Ditado/ditado.sh" "cancelar"; }
+
     // Tela que não volta do DPMS (bug de resume do note)
     Mod+Shift+P hotkey-overlay-title="Religar a tela (quando não volta do DPMS)" { power-on-monitors; }
 
