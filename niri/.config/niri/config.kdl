@@ -22,7 +22,10 @@ input {
         accel-profile "flat"
     }
 
-    focus-follows-mouse
+    // Segue o mouse se precisar rolar até 25% da tela. "0%" travava até com as
+    // duas colunas de 50% inteiras na tela (o niri calcula uma rolagem quase
+    // zero, mas não zero, e com 0% qualquer sobra bloqueia).
+    focus-follows-mouse max-scroll-amount="25%"
 }
 
 // --- Layout: colunas que rolam pro lado (não existe master no niri) ---
