@@ -404,8 +404,6 @@ bashrc-help() {
     echo "  pt              pytest -xv test.py"
     echo "  :q              sair do terminal (estilo vim)"
     echo "  ..              sobe um diretório"
-    echo "  code            abre VS Code na pasta atual"
-    echo "  colheita        roça do semestre: hábitos, provas e boletim no terminal"
     echo ""
     echo "  FUNÇÕES"
     echo "  hq              abre HQ (pdf/cbr/cbz) via fzf + YACReader"
