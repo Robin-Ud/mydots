@@ -23,6 +23,13 @@ _bk_init() {
     [[ -f "$_BK_FILE" ]] || touch "$_BK_FILE"
 }
 
+# Tira a linha do bookmark. grep -v sai com 1 quando não sobra nenhuma linha,
+# então `&& mv` nunca removia o último bookmark; só erro de verdade (2) aborta.
+_bk_tira() {
+    grep -v "^$1"$'\t' "$_BK_FILE" > "${_BK_FILE}.tmp"
+    (( $? <= 1 )) && mv "${_BK_FILE}.tmp" "$_BK_FILE"
+}
+
 # Carregado ao sourcear: exporta variáveis e define funções -x
 _bk_load() {
     _bk_init
@@ -85,7 +92,7 @@ bk() {
     local existed=0
     if grep -q "^${name}"$'\t' "$_BK_FILE" 2>/dev/null; then
         existed=1
-        grep -v "^${name}"$'\t' "$_BK_FILE" > "${_BK_FILE}.tmp" && mv "${_BK_FILE}.tmp" "$_BK_FILE"
+        _bk_tira "$name"
     fi
     printf '%s\t%s\t%s\n' "$name" "$bkpath" "$flags_val" >> "$_BK_FILE"
 
@@ -135,7 +142,7 @@ _bks_verify() {
         read -r choice </dev/tty
         case "$choice" in
             d)
-                grep -v "^${name}"$'\t' "$_BK_FILE" > "${_BK_FILE}.tmp" && mv "${_BK_FILE}.tmp" "$_BK_FILE"
+                _bk_tira "$name"
                 unset "$name"; unset -f "$name" 2>/dev/null
                 echo "      Removido: $name"
                 ;;
@@ -145,7 +152,7 @@ _bks_verify() {
                 if [[ ! "$new_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
                     echo "      Nome inválido, pulando."
                 else
-                    grep -v "^${name}"$'\t' "$_BK_FILE" > "${_BK_FILE}.tmp" && mv "${_BK_FILE}.tmp" "$_BK_FILE"
+                    _bk_tira "$name"
                     printf '%s\t%s\t%s\n' "$new_name" "$bkpath" "$flags" >> "$_BK_FILE"
                     unset "$name"; unset -f "$name" 2>/dev/null
                     export "${new_name}=${bkpath}"
@@ -175,7 +182,7 @@ unbk() {
             rc=1; continue
         fi
         if grep -q "^${name}"$'\t' "$_BK_FILE" 2>/dev/null; then
-            grep -v "^${name}"$'\t' "$_BK_FILE" > "${_BK_FILE}.tmp" && mv "${_BK_FILE}.tmp" "$_BK_FILE"
+            _bk_tira "$name"
             unset "$name"; unset -f "$name" 2>/dev/null
             echo "Removido: \$$name"
         else

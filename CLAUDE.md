@@ -15,5 +15,5 @@ Dotfiles do Matheus, um pacote do GNU Stow por programa (ver README). Público
 - Público: nada de dado pessoal (nome de repo privado, nº USP, senha). O
   `autoMode` do Claude Code fica em `~/.claude/settings.local.json`, fora daqui.
 - Testes: `python3 <script>_test.py` em `niri/.config/niri`, `bash SetNiri_test.sh`,
-  `bash comandos/.config/comandos/comandos_test.sh`; config do niri com
+  `bash comandos/.config/comandos/comandos_test.sh`, `bash bk/.config/bk/bk_test.sh`; config do niri com
   `niri validate -c niri/.config/niri/config.kdl`.
