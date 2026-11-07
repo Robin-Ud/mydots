@@ -335,8 +335,8 @@ binds {
     Mod+Shift+WheelScrollUp hotkey-overlay-title=null cooldown-ms=150 { focus-workspace-up; }
 
     // Prints (mesmos do Hyprland) + o seletor nativo do niri no Super+Print
-    Print hotkey-overlay-title="Print da tela → área de transferência" { spawn-sh "grim - | wl-copy"; }
-    Ctrl+Print hotkey-overlay-title="Print da tela → ~/Imagens/Prints" { spawn-sh "grim ~/Imagens/Prints/$(date +'%Y-%m-%d-%H%M%S_niri.png')"; }
+    Print hotkey-overlay-title="Print da tela em foco → área de transferência" { spawn-sh "grim -o $(niri msg -j focused-output | jq -r .name) - | wl-copy"; }
+    Ctrl+Print hotkey-overlay-title="Print da tela em foco → ~/Imagens/Prints" { spawn-sh "grim -o $(niri msg -j focused-output | jq -r .name) ~/Imagens/Prints/$(date +'%Y-%m-%d-%H%M%S_niri.png')"; }
     Shift+Print hotkey-overlay-title="Print de área → área de transferência" { spawn-sh "grim -g \"$(slurp)\" - | wl-copy"; }
     Ctrl+Shift+Print hotkey-overlay-title="Print de área → ~/Imagens" { spawn-sh "grim -g \"$(slurp)\" ~/Imagens/$(date +'%Y-%m-%d-%H%M%S_niri.png')"; }
     Mod+Print hotkey-overlay-title="Seletor de print do niri" { screenshot; }
