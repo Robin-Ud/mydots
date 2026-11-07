@@ -30,6 +30,7 @@ só um link para cá.
 | `bk` | bookmarks de diretório no bash (`source ~/.config/bk/bk.sh`) |
 | `rofi` / `rbw` | lançador e o `rofi-rbw` (senhas do Bitwarden) |
 | `scripts` | executáveis em `~/.local/bin` (abaixo) |
+| `mimeapps` | quem abre cada tipo de arquivo: texto no VS Code, `.md` no Obsidian (o `xdg-open` vê `.md` como texto; use `gio open`) |
 | `claude` | config, comandos e skills do Claude Code |
 | `sistema` | **não é pacote do stow**: arquivos de fora da home, instalados com `sudo install` (abaixo) |
 

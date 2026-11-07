@@ -1,0 +1,10 @@
+[Default Applications]
+application/pdf=com.github.xournalpp.xournalpp.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+x-scheme-handler/cpdm=CPDimensions-Multi.desktop
+inode/directory=org.kde.dolphin.desktop
+text/plain=com.microsoft.VSCode.desktop
+text/markdown=md.obsidian.Obsidian.desktop
+
+[Added Associations]
+video/mp4=org.gnome.Showtime.desktop;mpv.desktop;vlc.desktop;
