@@ -87,6 +87,19 @@ bk() {
         echo "bk: '$name' é nome reservado do próprio bk"
         return 1
     fi
+    # bk PATH exportaria PATH=pasta atual, e o _bk_load repetiria isso em todo
+    # shell novo. Bookmark que já existe passa (é atualização).
+    if ! grep -q "^${name}"$'\t' "$_BK_FILE" 2>/dev/null; then
+        case "$name" in
+            IFS|PS[0-4]|PROMPT_COMMAND|CDPATH|BASH*|HIST*|SHELLOPTS)
+                echo "bk: conflito — '$name' é variável do shell"
+                return 1 ;;
+        esac
+        if printenv "$name" >/dev/null 2>&1; then
+            echo "bk: conflito — '$name' já é variável de ambiente"
+            return 1
+        fi
+    fi
 
     if (( dangerous )); then
         local existing_type
@@ -242,6 +255,9 @@ _bk_help() {
   bks verify        verifica conflitos nos bookmarks -x (installs novos)
   unbk <nome>...    remove um ou mais bookmarks
   bk --help         mostra esta ajuda
+
+  Recusa nomes do próprio bk (bk, bks, unbk, _bk*) e variáveis do sistema
+  (PATH, HOME, PS1...), que quebrariam o shell.
 
 EOF
 }

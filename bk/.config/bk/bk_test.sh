@@ -60,6 +60,14 @@ espera "bk sem -x por cima de um -x tira o atalho gerado" \
     'sem função, $aa=ok'
 espera "unbk de -x tira o atalho" \
     'bk -x aa >/dev/null; unbk aa >/dev/null; type -t aa || echo some' 'some'
+echo "variáveis do sistema:"
+for v in PATH HOME IFS PS1; do
+    espera "bk $v recusado" \
+        "antes=\"\$$v\"; bk $v >/dev/null; bk -x $v >/dev/null; [[ \"\$$v\" == \"\$antes\" ]] && bks" \
+        'Nenhum bookmark salvo.'
+done
+espera "bookmark já carregado continua atualizável" \
+    'bk aa >/dev/null; source "'"$DIR"'/bk.sh"; bk aa' "Atualizado: \$aa → $TMP/pasta"
 echo
 (( falhas )) && { echo "$falhas falha(s)"; exit 1; }
 echo "tudo ok"
