@@ -35,6 +35,21 @@ espera "recusa regex no nome" \
     'bk aa >/dev/null; unbk ".*" >/dev/null; bks' \
     "       \$aa                 $TMP/pasta"
 
+echo "nomes reservados:"
+for n in bk bks unbk _bk_load _BK_FILE; do
+    espera "bk $n recusado e bk segue vivo" \
+        "bk $n >/dev/null; bk -x $n >/dev/null; { declare -f $n || echo \"\${$n:-}\"; } | md5sum" \
+        "$(caso "{ declare -f $n || echo \"\${$n:-}\"; } | md5sum")"
+done
+espera "unbk bk não apaga a função" \
+    'unbk bk >/dev/null; type -t bk' 'function'
+espera "linha reservada no arquivo é ignorada ao carregar" \
+    'printf "bk\t/tmp\tx\n" >> "$_BK_FILE"; source "'"$DIR"'/bk.sh" 2>/dev/null; type bk | grep -c _bk_init' \
+    '1'
+espera "unbk tira linha reservada do arquivo sem unset" \
+    'printf "bk\t/tmp\tx\n" >> "$_BK_FILE"; unbk bk >/dev/null; echo "$(bks) $(type -t bk)"' \
+    'Nenhum bookmark salvo. function'
+
 echo
 (( falhas )) && { echo "$falhas falha(s)"; exit 1; }
 echo "tudo ok"

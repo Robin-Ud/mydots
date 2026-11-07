@@ -18,6 +18,14 @@ _bk_type() {
     fi
 }
 
+# Nomes do próprio bk: virar bookmark apagaria ou sobrescreveria a função
+_bk_reservado() {
+    case "$1" in
+        bk|bks|unbk|_bk*|_BK*) return 0 ;;
+    esac
+    return 1
+}
+
 _bk_init() {
     mkdir -p "$(dirname "$_BK_FILE")"
     [[ -f "$_BK_FILE" ]] || touch "$_BK_FILE"
@@ -37,6 +45,10 @@ _bk_load() {
         [[ -z "$name" ]] && continue
         if [[ ! "$name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
             echo "bk: nome inválido '$name' no arquivo de bookmarks — use letras, números e _. Ignorando essa linha (use 'unbk' ou edite ~/.local/share/bk/bookmarks)." >&2
+            continue
+        fi
+        if _bk_reservado "$name"; then
+            echo "bk: '$name' é nome reservado do bk. Ignorando essa linha (use 'unbk $name' ou edite ~/.local/share/bk/bookmarks)." >&2
             continue
         fi
         unalias "$name" 2>/dev/null
@@ -64,6 +76,10 @@ bk() {
     fi
     if [[ ! "$name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
         echo "bk: nome inválido '$name' — use letras, números e _"
+        return 1
+    fi
+    if _bk_reservado "$name"; then
+        echo "bk: '$name' é nome reservado do próprio bk"
         return 1
     fi
 
@@ -149,8 +165,8 @@ _bks_verify() {
             r)
                 printf '      Novo nome: '
                 read -r new_name </dev/tty
-                if [[ ! "$new_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
-                    echo "      Nome inválido, pulando."
+                if [[ ! "$new_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || _bk_reservado "$new_name"; then
+                    echo "      Nome inválido ou reservado, pulando."
                 else
                     _bk_tira "$name"
                     printf '%s\t%s\t%s\n' "$new_name" "$bkpath" "$flags" >> "$_BK_FILE"
@@ -180,6 +196,18 @@ unbk() {
         if [[ ! "$name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
             echo "unbk: nome inválido: $name"
             rc=1; continue
+        fi
+        # bookmark com nome reservado só existe por edição manual: tira do
+        # arquivo, mas sem unset, que apagaria o próprio bk
+        if _bk_reservado "$name"; then
+            if grep -q "^${name}"$'\t' "$_BK_FILE" 2>/dev/null; then
+                _bk_tira "$name"
+                echo "Removido do arquivo: $name (nome reservado, função do bk mantida)"
+            else
+                echo "unbk: '$name' é nome reservado do próprio bk"
+                rc=1
+            fi
+            continue
         fi
         if grep -q "^${name}"$'\t' "$_BK_FILE" 2>/dev/null; then
             _bk_tira "$name"
