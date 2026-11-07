@@ -162,20 +162,28 @@ _bks_verify() {
 }
 
 unbk() {
-    local name="$1"
-    if [[ -z "$name" ]]; then
-        echo "Uso: unbk <nome>"
+    if [[ $# -eq 0 ]]; then
+        echo "Uso: unbk <nome> [nome...]"
         return 1
     fi
     _bk_init
-    if grep -q "^${name}"$'\t' "$_BK_FILE" 2>/dev/null; then
-        grep -v "^${name}"$'\t' "$_BK_FILE" > "${_BK_FILE}.tmp" && mv "${_BK_FILE}.tmp" "$_BK_FILE"
-        unset "$name"; unset -f "$name" 2>/dev/null
-        echo "Removido: \$$name"
-    else
-        echo "unbk: não encontrado: $name"
-        return 1
-    fi
+    local name rc=0
+    for name in "$@"; do
+        # o nome vira regex no grep: sem validar, 'unbk .*' apagaria tudo
+        if [[ ! "$name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+            echo "unbk: nome inválido: $name"
+            rc=1; continue
+        fi
+        if grep -q "^${name}"$'\t' "$_BK_FILE" 2>/dev/null; then
+            grep -v "^${name}"$'\t' "$_BK_FILE" > "${_BK_FILE}.tmp" && mv "${_BK_FILE}.tmp" "$_BK_FILE"
+            unset "$name"; unset -f "$name" 2>/dev/null
+            echo "Removido: \$$name"
+        else
+            echo "unbk: não encontrado: $name"
+            rc=1
+        fi
+    done
+    return $rc
 }
 
 _bk_help() {
@@ -187,7 +195,7 @@ _bk_help() {
                     nome cld → cd e abre o claude
   bks               lista todos os bookmarks
   bks verify        verifica conflitos nos bookmarks -x (installs novos)
-  unbk <nome>       remove um bookmark
+  unbk <nome>...    remove um ou mais bookmarks
   bk --help         mostra esta ajuda
 
 EOF
