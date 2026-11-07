@@ -59,12 +59,19 @@ layout {
         inactive-color "#595959aa"
     }
 
-    // Abas (Super+T): barrinha dentro da coluna, senão some no gap da borda
+    // Coluna nova já nasce em abas: Super+,/. empilha como aba, Super+T desempilha
+    // (volta a dividir a altura). Janela sozinha não mostra barra.
+    default-column-display "tabbed"
+
+    // Abas: barra no topo, dentro da coluna (senão some no gap da borda), grossa
+    // pra clicar — cada aba é um pedaço da barra, clique troca de aba
     tab-indicator {
+        hide-when-single-tab
         place-within-column
-        position "left"
-        width 6
-        gap 4
+        position "top"
+        width 12
+        gap 3
+        corner-radius 4
         length total-proportion=1.0
         active-gradient from="#33ccffee" to="#00ff99ee" angle=45
         inactive-color "#595959aa"
@@ -273,7 +280,7 @@ binds {
     Mod+Equal hotkey-overlay-title="Coluna mais larga" { set-column-width "+5%"; }
     Mod+R hotkey-overlay-title="Próxima largura predefinida" { switch-preset-column-width; }
     Mod+C hotkey-overlay-title="Centralizar coluna" { center-column; }
-    Mod+T hotkey-overlay-title="Coluna em abas" { toggle-column-tabbed-display; }
+    Mod+T hotkey-overlay-title="Coluna: abas / empilhada" { toggle-column-tabbed-display; }
 
     // Foco (vim + setas)
     Mod+H hotkey-overlay-title="Foco: coluna da esquerda (ou ←)" { focus-column-left; }
