@@ -1,7 +1,8 @@
 // niri — sessão de teste com Noctalia (barra, launcher, notificações, lock).
 // Binds portados do Hyprland: o que tem equivalente ficou na mesma tecla;
 // o que é do master (swapwithmaster, addmaster...) virou o análogo em colunas.
-// Recarrega sozinho ao salvar. Ver tudo: Super+/ (overlay de atalhos).
+// Recarrega sozinho ao salvar. Cola: Super+/ (essencial), Super+Shift+/ (tudo,
+// com busca) — o cola.py lê os hotkey-overlay-title daqui.
 //
 // Mesmo arquivo no note e no PC. O que é de uma máquina só (monitor, escala,
 // mesa digitalizadora) fica no local.kdl, fora do git — incluído no fim.
@@ -174,6 +175,7 @@ window-rule {
     match title="^Picture-in-Picture$"
     match title="^Ligação do WhatsApp"
     match app-id="wl_mirror"
+    match app-id="^rud\\.cola$"
     opacity 1.0
 }
 
@@ -188,6 +190,12 @@ window-rule {
 // SetTela (Super+P): flutuante, abre centralizada
 window-rule {
     match app-id="^rud\\.settela$"
+    open-floating true
+}
+
+// Cola de atalhos (Super+/ e Super+Shift+/): flutuante, no centro
+window-rule {
+    match app-id="^rud\\.cola$"
     open-floating true
 }
 
@@ -223,7 +231,11 @@ recent-windows {
 
 // --- Binds ---
 binds {
-    Mod+Slash hotkey-overlay-title="Esta cola de atalhos" { show-hotkey-overlay; }
+    // Cola de atalhos: Super+/ é o -h (seco, sem o dia a dia), Super+Shift+/ é o man.
+    // Sai deste arquivo: title = linha, title=null = "também:" da linha de cima,
+    // comentário depois de linha em branco = seção (regras no topo do cola.py).
+    Mod+Slash hotkey-overlay-title="Cola: só o essencial" { spawn "/home/rud/.config/niri/cola.py" "resumo"; }
+    Mod+Shift+Slash hotkey-overlay-title="Cola: todos os atalhos, com busca" { spawn "/home/rud/.config/niri/cola.py" "tudo"; }
 
     // Apps (mesmas teclas do Hyprland)
     Mod+Return hotkey-overlay-title="Terminal" { spawn "kitty"; }
@@ -264,7 +276,7 @@ binds {
     Mod+Shift+S hotkey-overlay-title="Scratchpad: mandar janela (de dentro, devolve)" { spawn "/home/rud/.config/niri/scratch.py" "send"; }
     Mod+Space hotkey-overlay-title="Visão geral" repeat=false { toggle-overview; }
 
-    // "Master" em colunas: Super+U vai pra primeira coluna (era focusmaster),
+    // Colunas (o "master" do Hyprland): Super+U vai pra primeira coluna (era focusmaster),
     // Alt+Tab circula (era cyclenext), Super+,/. empilha/desempilha na coluna
     // (era addmaster/removemaster), Super+-/= é a largura (era mfact)
     // Troca com a coluna do lado e a largura fica com o lado (o swap do master)
@@ -370,6 +382,7 @@ binds {
     // Tela que não volta do DPMS (bug de resume do note)
     Mod+Shift+P hotkey-overlay-title="Religar a tela (quando não volta do DPMS)" { power-on-monitors; }
 
+    // Sistema
     Mod+Shift+C hotkey-overlay-title="Recarregar a config (já recarrega ao salvar)" { spawn "niri" "msg" "action" "load-config-file"; }
     Mod+Shift+E hotkey-overlay-title="Sair do niri" { quit; }
 }

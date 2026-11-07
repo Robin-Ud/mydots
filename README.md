@@ -57,6 +57,9 @@ git clone https://github.com/Robin-Ud/mydots ~/.mydots
 - **Sem master:** o niri só tem colunas. `swap.py` troca com a coluna do lado
   levando a largura junto com o lado, `solo.py` deixa janela sozinha em 100%,
   `scratch.py` é o scratchpad.
+- **Cola de atalhos:** Super+/ (o essencial) e Super+Shift+/ (tudo, com busca e
+  clique pra rodar), montada dos `hotkey-overlay-title` pelo `cola.py`. O botão
+  Socorro abre o Claude Code de guia pra visitas (`socorro.md`).
 - **Duas telas:** Super+Ctrl+P troca o conteúdo do note com o do monitor
   (`telas.py`, o swapactiveworkspaces do Hyprland).
 - **Abas no kitty:** Super+Shift+Enter abre aba no kitty focado (na mesma pasta),
