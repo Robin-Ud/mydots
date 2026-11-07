@@ -94,6 +94,7 @@ git checkout morto -- nvim hypr   # traz de volta só o que quiser
 
 - `att_diaria.sh`: atualiza o sistema (dnf) no boot, no máximo uma vez por dia.
 - `tcd`: compila e roda (C, Python, shell) pelo nome do arquivo.
+- `kitty-atalhos [filtro]`: os atalhos do kitty (padrão + `kitty.conf`), o `-h` que ele não tem.
 - `aba NOME`: renomeia a aba do kitty onde você está (sem nome: volta ao automático).
 
 ## Sistema (`sistema/`)

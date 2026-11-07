@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""kitty-atalhos — o "kitty -h" de atalhos que o kitty não tem.
+
+Uso: kitty-atalhos [filtro]      ex.: kitty-atalhos aba   kitty-atalhos scroll
+
+Lê os atalhos padrão de dentro do próprio kitty (sempre batem com a versão
+instalada), joga fora os de Mac (cmd/opt), troca kitty_mod por Ctrl+Shift e
+acrescenta os map do seu kitty.conf. O filtro procura no atalho, na descrição
+e na seção; "aba"/"janela"/"fonte" viram tab/window/font.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import subprocess
+import sys
+
+CONF = os.path.expanduser("~/.config/kitty/kitty.conf")
+PT = {"aba": "tab", "abas": "tab", "janela": "window", "janelas": "window",
+      "fonte": "font", "rolar": "scroll", "copiar": "copy", "colar": "paste",
+      "layout": "layout", "url": "url", "config": "config"}
+
+
+def pretty(key: str) -> str:
+    """kitty_mod+shift+t -> Ctrl+Shift+T"""
+    key = key.replace("kitty_mod", "ctrl+shift")
+    return "+".join(p.upper() if len(p) == 1 else p.capitalize() for p in key.split("+"))
+
+
+def parse(default_conf: str) -> list[tuple[str, str, str]]:
+    """(seção, atalho, descrição) dos map do kitty.conf padrão comentado."""
+    out, section, desc, in_keys = [], "", "", False
+    for line in default_conf.splitlines():
+        if line.startswith("#: Keyboard shortcuts {{{"):
+            in_keys = True
+            continue
+        if not in_keys:
+            continue
+        m = re.match(r"#: (.+?) \{\{\{$", line)
+        if m:
+            section = m.group(1)
+            continue
+        m = re.match(r"#: (\S.*)$", line)
+        if m and not line.startswith("#:     "):
+            desc = m.group(1)
+            continue
+        m = re.match(r"# map (\S+)\s+(.+)$", line)
+        if m:
+            key = m.group(1)
+            if any(mod in key.split("+") for mod in ("cmd", "opt")):
+                continue
+            out.append((section, pretty(key), desc or m.group(2)))
+    return out
+
+
+def user_maps(text: str) -> list[tuple[str, str, str]]:
+    out = []
+    for line in text.splitlines():
+        m = re.match(r"map (\S+)\s+(.+)$", line.strip())
+        if m:
+            out.append(("Seus (kitty.conf)", pretty(m.group(1)), m.group(2)))
+    return out
+
+
+def matches(row: tuple[str, str, str], filt: str) -> bool:
+    if not filt:
+        return True
+    f = PT.get(filt.lower(), filt.lower())
+    return any(f in c.lower() for c in row)
+
+
+def main() -> None:
+    filt = " ".join(sys.argv[1:])
+    if filt in ("-h", "--help"):
+        print(__doc__)
+        return
+    conf = subprocess.run(
+        ["kitty", "+runpy", "from kitty.config import commented_out_default_config as c; print(c())"],
+        capture_output=True, text=True).stdout
+    rows = parse(conf)
+    try:
+        rows += user_maps(open(CONF).read())
+    except OSError:
+        pass
+    last = None
+    for row in (r for r in rows if matches(r, filt)):
+        if row[0] != last:
+            print(f"\n\033[1;34m{row[0]}\033[0m")
+            last = row[0]
+        print(f"  \033[33m{row[1]:<26}\033[0m {row[2]}")
+    print("\n\033[2mCtrl+Shift+F1 abre a doc completa do kitty · Ctrl+Shift+F2 edita o kitty.conf\033[0m")
+
+
+if __name__ == "__main__":
+    main()
