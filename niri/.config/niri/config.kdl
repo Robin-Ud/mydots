@@ -278,8 +278,10 @@ binds {
     Mod+Period hotkey-overlay-title="Empilhar / desempilhar com a coluna da direita" { consume-or-expel-window-right; }
     Mod+Minus hotkey-overlay-title="Coluna mais estreita" { set-column-width "-5%"; }
     Mod+Equal hotkey-overlay-title="Coluna mais larga" { set-column-width "+5%"; }
-    Mod+R hotkey-overlay-title="Próxima largura predefinida" { switch-preset-column-width; }
-    Mod+C hotkey-overlay-title="Centralizar coluna" { center-column; }
+    Mod+R hotkey-overlay-title="Janela: próxima largura predefinida (⅓ ½ ⅔)" { switch-preset-column-width; }
+    Mod+C hotkey-overlay-title="Centralizar janela (flutuante ou coluna)" { center-window; }
+    // Volta pro tamanho de quando abriu: coluna em ½ e altura automática; flutuante em ½×⅔, centralizada
+    Mod+Shift+M hotkey-overlay-title="Janela: tamanho padrão (desfaz Super+M / Super+R)" { spawn-sh "if niri msg -j focused-window | jq -e .is_floating >/dev/null; then niri msg action set-window-width 50% && niri msg action set-window-height 66% && niri msg action center-window; else niri msg action set-column-width 50% && niri msg action reset-window-height; fi"; }
     Mod+T hotkey-overlay-title="Coluna: abas / empilhada" { toggle-column-tabbed-display; }
 
     // Foco (vim + setas)
