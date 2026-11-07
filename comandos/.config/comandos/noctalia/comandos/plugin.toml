@@ -1,0 +1,37 @@
+# Comandos: o "KRunner" do Super+D.
+# - cada script executável em ~/.config/comandos vira um item do launcher (/c só comandos);
+# - busca arquivos da home com o fd, ao vivo (/a só arquivos).
+# Os dois também aparecem na busca normal, misturados com apps e a calculadora.
+
+id = "matheus/comandos"
+name = "Comandos"
+version = "0.1.0"
+plugin_api = 39
+author = "matheus"
+license = "MIT"
+dependencies = ["fd", "xdg-open", "python3"]
+tags = ["launcher", "productivity"]
+icon = "terminal-2"
+description = "Roda os scripts de ~/.config/comandos pelo launcher e busca arquivos da home com o fd."
+
+[[launcher_provider]]
+id = "comandos"
+entry = "comandos.luau"
+prefix = "c"
+glyph = "terminal-2"
+include_in_global_search = true
+
+[[launcher_provider]]
+id = "arquivos"
+entry = "arquivos.luau"
+prefix = "a"
+glyph = "file-search"
+include_in_global_search = true
+
+# Contas em LaTeX: \sqrt{25}, \frac{1}{3}+\frac{1}{6}, 2\pi, √25, 3² (a embutida não entende)
+[[launcher_provider]]
+id = "contas"
+entry = "contas.luau"
+prefix = "tex"
+glyph = "math-function"
+include_in_global_search = true

@@ -260,7 +260,8 @@ binds {
     Mod+Shift+W hotkey-overlay-title="Apagar wallpaper" { spawn "mywpp" "delete"; }
 
     // Noctalia
-    Mod+D hotkey-overlay-title="Launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
+    Mod+Space hotkey-overlay-title="Launcher (ou Alt+Espaço)" { spawn-sh "noctalia msg panel-toggle launcher"; }   // Spotlight; era Super+D
+    Alt+Space hotkey-overlay-title=null { spawn-sh "noctalia msg panel-toggle launcher"; }   // o atalho do KRunner
     Mod+N hotkey-overlay-title="Central de controle" { spawn-sh "noctalia msg panel-toggle control-center"; }
     Mod+I hotkey-overlay-title="Configurações da Noctalia" { spawn-sh "noctalia msg settings-toggle"; }
     Mod+A hotkey-overlay-title="Argos" { spawn-sh "noctalia msg panel-toggle matheus/argos:painel"; }
@@ -274,7 +275,7 @@ binds {
     // Scratchpad (era special:magic no Hyprland): Super+S mostra/esconde, Super+Shift+S manda pra lá
     Mod+S hotkey-overlay-title="Scratchpad: entrar / sair" { spawn "/home/rud/.config/niri/scratch.py" "toggle"; }
     Mod+Shift+S hotkey-overlay-title="Scratchpad: mandar janela (de dentro, devolve)" { spawn "/home/rud/.config/niri/scratch.py" "send"; }
-    Mod+Space hotkey-overlay-title="Visão geral" repeat=false { toggle-overview; }
+    Mod+D hotkey-overlay-title="Visão geral" repeat=false { toggle-overview; }   // trocou com o launcher (era Super+Espaço)
 
     // Colunas (o "master" do Hyprland): Super+U vai pra primeira coluna (era focusmaster),
     // Alt+Tab circula (era cyclenext), Super+,/. empilha/desempilha na coluna

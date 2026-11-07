@@ -244,7 +244,7 @@ temperature_day = 4500
 temperature_night = 4200
 
 [plugins]
-enabled = [ "matheus/argos" ]
+enabled = [ "matheus/argos", "matheus/comandos" ]
 
     [[plugins.source]]
     kind = "git"
@@ -260,6 +260,12 @@ enabled = [ "matheus/argos" ]
     kind = "path"
     location = "/home/rud/deving/argos/noctalia"
     name = "argos"
+
+    # Super+Espaço vira "KRunner": scripts de ~/.config/comandos (/c) e arquivos da home (/a)
+    [[plugins.source]]
+    kind = "path"
+    location = "/home/rud/.config/comandos/noctalia"
+    name = "comandos"
 
 [shell]
 # Janela de senha quando app gráfico pede sudo (no lugar do lxpolkit do Hyprland)

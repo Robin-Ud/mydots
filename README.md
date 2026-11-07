@@ -31,6 +31,7 @@ só um link para cá.
 | `rofi` / `rbw` | lançador e o `rofi-rbw` (senhas do Bitwarden) |
 | `scripts` | executáveis em `~/.local/bin` (abaixo) |
 | `mimeapps` | quem abre cada tipo de arquivo: texto no VS Code, `.md` no Obsidian (o `xdg-open` vê `.md` como texto; use `gio open`) |
+| `comandos` | "KRunner" do Super+Espaço: scripts de `~/.config/comandos` viram itens do launcher, mais busca de arquivos com o `fd` (plugin da noctalia; ver o README de lá) |
 | `claude` | config, comandos e skills do Claude Code |
 | `sistema` | **não é pacote do stow**: arquivos de fora da home, instalados com `sudo install` (abaixo) |
 
