@@ -65,6 +65,19 @@ HISTCONTROL=ignorespace
 bind '"\e[A": history-search-backward' 2>/dev/null
 bind '"\e[B": history-search-forward'  2>/dev/null
 
+# --- Alt+E: liga/desliga o modo vi na linha de comando -----------------
+# No modo normal (emacs) Alt+E vira modo vi; no modo vi Alt+E volta pro
+# emacs. Abrir o comando no nvim continua sendo Ctrl+X Ctrl+E.
+if [[ ${BLE_VERSION-} ]]; then
+    ble-bind -m emacs   -f M-e vi-editing-mode
+    ble-bind -m vi_imap -f M-e emacs-editing-mode
+    ble-bind -m vi_nmap -f M-e emacs-editing-mode
+else
+    bind -m emacs-standard '"\ee": vi-editing-mode'
+    bind -m vi-insert      '"\ee": emacs-editing-mode'
+    bind -m vi-command     '"\ee": emacs-editing-mode'
+fi
+
 # --- fzf ---------------------------------------------------------------
 export FZF_DEFAULT_OPTS="--preview 'bat --color=always {}'"
 
