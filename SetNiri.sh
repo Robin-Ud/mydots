@@ -173,6 +173,13 @@ local_kdl() {
     return 0
 }
 
+# O Claude Code grava um bloco autoMode no settings.json (descreve a máquina);
+# o filtro tira ele no commit. O .gitattributes vem no clone, a config não.
+filtro_git() {
+    diz "Filtro do git que tira o autoMode do settings.json do Claude"
+    run git -C "$MYDOTS" config filter.sem-automode.clean 'python3 .gitfiltros/sem_automode.py'
+}
+
 main() {
     [ -d "$MYDOTS/niri" ] || { echo "Cadê o mydots? git clone https://github.com/Robin-Ud/mydots $MYDOTS" >&2; exit 1; }
     [ "$HOME" = /home/rud ] || avisa "Os binds do niri usam /home/rud fixo; com outro usuário, troque no config.kdl"
@@ -184,6 +191,7 @@ main() {
     apps_proprios
     links
     local_kdl
+    filtro_git
 
     echo
     diz "Pronto. Saia da sessão e escolha 'Niri' na tela de login (engrenagem do GDM)."
