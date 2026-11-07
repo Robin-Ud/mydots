@@ -50,6 +50,16 @@ espera "unbk tira linha reservada do arquivo sem unset" \
     'printf "bk\t/tmp\tx\n" >> "$_BK_FILE"; unbk bk >/dev/null; echo "$(bks) $(type -t bk)"' \
     'Nenhum bookmark salvo. function'
 
+echo "funções que não são do bk:"
+espera "bk sem -x não apaga função de mesmo nome" \
+    'minha() { echo oi; }; bk minha >/dev/null; minha' 'oi'
+espera "unbk de bookmark sem -x não apaga função de mesmo nome" \
+    'minha() { echo oi; }; bk minha >/dev/null; unbk minha >/dev/null; minha' 'oi'
+espera "bk sem -x por cima de um -x tira o atalho gerado" \
+    'bk -x aa >/dev/null; bk aa >/dev/null; type -t aa || echo "sem função, \$aa=${aa:+ok}"' \
+    'sem função, $aa=ok'
+espera "unbk de -x tira o atalho" \
+    'bk -x aa >/dev/null; unbk aa >/dev/null; type -t aa || echo some' 'some'
 echo
 (( falhas )) && { echo "$falhas falha(s)"; exit 1; }
 echo "tudo ok"

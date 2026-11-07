@@ -26,6 +26,11 @@ _bk_reservado() {
     return 1
 }
 
+# Flags gravadas do bookmark ("x" = tem função gerada pelo bk)
+_bk_flags() {
+    grep "^$1"$'\t' "$_BK_FILE" 2>/dev/null | head -n 1 | cut -f3
+}
+
 _bk_init() {
     mkdir -p "$(dirname "$_BK_FILE")"
     [[ -f "$_BK_FILE" ]] || touch "$_BK_FILE"
@@ -105,9 +110,10 @@ bk() {
     (( dangerous )) && flags_val="x"
 
     _bk_init
-    local existed=0
+    local existed=0 old_flags=""
     if grep -q "^${name}"$'\t' "$_BK_FILE" 2>/dev/null; then
         existed=1
+        old_flags=$(_bk_flags "$name")
         _bk_tira "$name"
     fi
     printf '%s\t%s\t%s\n' "$name" "$bkpath" "$flags_val" >> "$_BK_FILE"
@@ -115,7 +121,9 @@ bk() {
     export "${name}=${bkpath}"
     if (( dangerous )); then
         eval "${name}() { if [ \$# -eq 0 ]; then cd \"\$${name}\"; elif [ \"\$1\" = cld ]; then cd \"\$${name}\" && claude; else \"\$@\" \"\$${name}\"; fi; }"
-    else
+    elif [[ "$old_flags" == *x* ]]; then
+        # era -x e virou só variável: tira o atalho que o bk tinha gerado.
+        # Sem essa condição, `bk settela` apagava a função settela do usuário.
         unset -f "$name" 2>/dev/null
     fi
 
@@ -210,8 +218,10 @@ unbk() {
             continue
         fi
         if grep -q "^${name}"$'\t' "$_BK_FILE" 2>/dev/null; then
+            local flags; flags=$(_bk_flags "$name")
             _bk_tira "$name"
-            unset "$name"; unset -f "$name" 2>/dev/null
+            unset "$name"
+            [[ "$flags" == *x* ]] && unset -f "$name" 2>/dev/null
             echo "Removido: \$$name"
         else
             echo "unbk: não encontrado: $name"
