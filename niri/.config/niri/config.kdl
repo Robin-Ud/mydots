@@ -360,6 +360,7 @@ binds {
 
     // Monitores / projetor: espelhar, estender, posicionar (SetTela)
     Mod+P hotkey-overlay-title="Monitores e projetor (SetTela)" { spawn "/home/rud/deving/desktop/SetTela/settela.sh"; }
+    Mod+Ctrl+P hotkey-overlay-title="Trocar o conteúdo das telas (note ⇄ monitor)" { spawn "/home/rud/.config/niri/telas.py"; }
 
     // Ditado por voz (whisper.cpp local): aperta, fala, aperta de novo
     Mod+Z hotkey-overlay-title="Ditado: gravar / transcrever" repeat=false { spawn "/home/rud/deving/desktop/Ditado/ditado.sh"; }

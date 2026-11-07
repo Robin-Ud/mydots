@@ -57,6 +57,8 @@ git clone https://github.com/Robin-Ud/mydots ~/.mydots
 - **Sem master:** o niri só tem colunas. `swap.py` troca com a coluna do lado
   levando a largura junto com o lado, `solo.py` deixa janela sozinha em 100%,
   `scratch.py` é o scratchpad.
+- **Duas telas:** Super+Ctrl+P troca o conteúdo do note com o do monitor
+  (`telas.py`, o swapactiveworkspaces do Hyprland).
 - **Abas no kitty:** Super+Shift+Enter abre aba no kitty focado (na mesma pasta),
   Super+Shift+R renomeia; `aba.py`, pelo socket do `listen_on`.
 - Testes: `python3 <script>_test.py` em `niri/.config/niri` e `bash SetNiri_test.sh`.
