@@ -127,8 +127,6 @@ fi
 alias pt='pytest -xv test.py'                    # roda o teste do projeto atual
 alias :q='exit'                                  # Sair como no vim
 alias ..='cd ..'                                 # sobe um diretório
-alias code='code .'                              # Abre o VS Code na pasta atual
-alias colheita='~/deving/colheita/colheita.sh'   # Fazenda viva: seus hábitos no terminal
 
 # ===========================================================
 # 3. FUNÇÕES
