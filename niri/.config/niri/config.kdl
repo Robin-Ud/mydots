@@ -169,6 +169,7 @@ window-rule {
 window-rule {
     match app-id="^kitty$"
     match title="YouTube"
+    match title="Paramount"
     match title="Meet"
     match title="^Picture-in-Picture$"
     match title="^Ligação do WhatsApp"
