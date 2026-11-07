@@ -57,6 +57,8 @@ git clone https://github.com/Robin-Ud/mydots ~/.mydots
 - **Sem master:** o niri só tem colunas. `swap.py` troca com a coluna do lado
   levando a largura junto com o lado, `solo.py` deixa janela sozinha em 100%,
   `scratch.py` é o scratchpad.
+- **Abas no kitty:** Super+Shift+Enter abre aba no kitty focado (na mesma pasta),
+  Super+Shift+R renomeia; `aba.py`, pelo socket do `listen_on`.
 - Testes: `python3 <script>_test.py` em `niri/.config/niri` e `bash SetNiri_test.sh`.
 
 ## Editor: VS Code + vi
@@ -92,6 +94,7 @@ git checkout morto -- nvim hypr   # traz de volta só o que quiser
 
 - `att_diaria.sh`: atualiza o sistema (dnf) no boot, no máximo uma vez por dia.
 - `tcd`: compila e roda (C, Python, shell) pelo nome do arquivo.
+- `aba NOME`: renomeia a aba do kitty onde você está (sem nome: volta ao automático).
 
 ## Sistema (`sistema/`)
 

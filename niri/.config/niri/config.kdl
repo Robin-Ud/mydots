@@ -219,6 +219,8 @@ binds {
 
     // Apps (mesmas teclas do Hyprland)
     Mod+Return hotkey-overlay-title="Terminal" { spawn "kitty"; }
+    Mod+Shift+Return hotkey-overlay-title="Nova aba no kitty focado" { spawn "/home/rud/.config/niri/aba.py"; }
+    Mod+Shift+R hotkey-overlay-title="Renomear aba do kitty focado" { spawn "/home/rud/.config/niri/aba.py" "nome"; }
     Alt+Return hotkey-overlay-title="Firefox" { spawn "firefox"; }
     // Alt+letra: traz o app pra cá (ou abre); Alt+Shift+letra: vai até onde ele está
     Alt+V hotkey-overlay-title="Obsidian: trazer pra cá / abrir" { spawn "/home/rud/.config/niri/app.py" "here" "md.obsidian.Obsidian" "flatpak" "run" "md.obsidian.Obsidian"; }
