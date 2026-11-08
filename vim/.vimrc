@@ -60,3 +60,7 @@ if 1
   nnoremap <silent> <expr> P <SID>PuxaClip() . 'P'
   xnoremap <silent> <expr> p <SID>PuxaClip() . 'p'
 endif
+" Mensagem de commit: título pinta de outra cor só depois do 60º caractere
+if 1
+  let g:gitcommit_summary_length = 60
+endif
