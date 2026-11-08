@@ -33,6 +33,7 @@ só um link para cá.
 | `mimeapps` | quem abre cada tipo de arquivo: texto no VS Code, `.md` no Obsidian (o `xdg-open` vê `.md` como texto; use `gio open`) |
 | `comandos` | "KRunner" do Super+Espaço: scripts de `~/.config/comandos` viram itens do launcher, mais busca de arquivos com o `fd` (plugin da noctalia; ver o README de lá) |
 | `claude` | config, comandos e skills do Claude Code |
+| `git` | modelo da mensagem de commit (`commit-template`, a cola do Conventional Commits). Ligar: `git config --global commit.template ~/.config/git/commit-template` |
 | `sistema` | **não é pacote do stow**: arquivos de fora da home, instalados com `sudo install` (abaixo) |
 
 ## niri

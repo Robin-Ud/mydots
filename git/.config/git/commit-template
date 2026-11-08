@@ -1,0 +1,18 @@
+
+# tipo(escopo): descrição      até ~60, minúsculo, sem ponto
+#
+# corpo: o PORQUÊ (o quê o diff já mostra), quebrado em ~72
+# linhas com # somem; sair sem salvar (:cq) cancela o commit
+#
+# feat      coisa nova que o usuário vê
+# fix       conserto de bug
+# refactor  muda o código por dentro, mesmo comportamento
+# style     só formatação (espaço, quebra), sem mudar lógica
+# docs      README, CLAUDE.md, comentários
+# test      testes
+# perf      mais rápido
+# chore     manutenção (gitignore, config, limpeza)
+# content   conteúdo que o programa usa (puzzles, fichas, cards)
+#
+# escopo = a área, nunca o arquivo (lista no CLAUDE.md do projeto)
+# um assunto por commit; estilo nunca junto de comportamento

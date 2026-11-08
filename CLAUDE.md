@@ -8,7 +8,7 @@ Dotfiles do Matheus, um pacote do GNU Stow por programa (ver README). Público
   apagar ou trocar algo em `~/.config/X`, `ls -ld` (pode ser symlink da pasta inteira).
 - Commits no padrão do `~/.claude/CLAUDE.md`. Escopo = nome do pacote do stow
   (`niri`, `noctalia`, `kitty`, `bash`, `vscode`, `vim`, `claude`, `comandos`,
-  `mimeapps`, `scripts`, `rbw`, `sistema`, `blesh`, `bk`, `starship`...), mais
+  `mimeapps`, `scripts`, `rbw`, `sistema`, `blesh`, `bk`, `starship`, `git`...), mais
   `wallpaper` e `readme`. Mexeu em vários pacotes pra uma coisa só → sem escopo.
 - E-mail do repo é o noreply do GitHub (`git config user.email`); o global ainda é
   o gmail, então confira em clone novo.
