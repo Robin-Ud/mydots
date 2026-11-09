@@ -1,8 +1,21 @@
 #!/usr/bin/env bash
-# aba — renomeia a aba do kitty onde você está.
-# Uso: aba NOME...   ex.: aba servidor     aba notas da prova
-#      aba           volta ao título automático
+# aba — renomeia uma aba do kitty (por padrão, a aba onde você está).
+# Uso: aba NOME...       ex.: aba servidor     aba notas da prova
+#      aba N NOME...     renomeia a aba N (o número que aparece na barra)
+#      aba [N]           volta ao título automático
+#      aba -- NOME...    NOME começa com número (ex.: aba -- 2026 notas)
 # Atalho equivalente (com prompt): Super+Shift+R. Ver niri/aba.py.
 set -euo pipefail
 [[ -n "${KITTY_WINDOW_ID:-}" ]] || { echo "aba: não estou num kitty" >&2; exit 1; }
-exec kitty @ set-tab-title --match "window_id:$KITTY_WINDOW_ID" -- "$*"
+
+alvo="window_id:$KITTY_WINDOW_ID"
+if [[ "${1:-}" == -- ]]; then
+    shift
+elif [[ "${1:-}" =~ ^[1-9][0-9]*$ ]]; then
+    # a barra conta a partir de 1 ({index} do tab_title_template); o --match, de 0
+    alvo="index:$(( $1 - 1 ))"
+    shift
+    kitty @ ls --match-tab "$alvo" >/dev/null 2>&1 \
+        || { echo "aba: não tem aba $(( ${alvo#index:} + 1 )) nesta janela" >&2; exit 1; }
+fi
+exec kitty @ set-tab-title --match "$alvo" -- "$*"
