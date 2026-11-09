@@ -104,6 +104,7 @@ git checkout morto -- nvim hypr   # traz de volta só o que quiser
 - `kitty-atalhos [filtro]`: os atalhos do kitty (padrão + `kitty.conf`), o `-h` que ele não tem.
 - `aba [N] NOME`: renomeia a aba do kitty onde você está, ou a aba N (o número da
   barra); sem nome, volta ao automático. Nome que começa com número: `aba -- 2026 notas`.
+  `aba -n [NOME]` abre aba nova na pasta atual (o `exit` fecha).
 
 ## Sistema (`sistema/`)
 

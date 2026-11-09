@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
-# aba — renomeia uma aba do kitty (por padrão, a aba onde você está).
+# aba — renomeia uma aba do kitty (por padrão, a aba onde você está) ou abre outra.
 # Uso: aba NOME...       ex.: aba servidor     aba notas da prova
+#      aba -n [NOME...]  abre aba nova na pasta atual (com nome, se der)
 #      aba N NOME...     renomeia a aba N (o número que aparece na barra)
 #      aba [N]           volta ao título automático
 #      aba -- NOME...    NOME começa com número (ex.: aba -- 2026 notas)
 # Atalho equivalente (com prompt): Super+Shift+R. Ver niri/aba.py.
 set -euo pipefail
 [[ -n "${KITTY_WINDOW_ID:-}" ]] || { echo "aba: não estou num kitty" >&2; exit 1; }
+
+if [[ "${1:-}" == -n ]]; then
+    shift
+    # o kitty não tem "nova aba aqui" curto: launch é genérico e o padrão é split
+    exec kitty @ launch --type=tab --cwd="$PWD" ${1:+--tab-title "$*"}
+fi
 
 alvo="window_id:$KITTY_WINDOW_ID"
 if [[ "${1:-}" == -- ]]; then
