@@ -2,6 +2,8 @@
 # aba — renomeia uma aba do kitty (por padrão, a aba onde você está) ou abre outra.
 # Uso: aba NOME...       ex.: aba servidor     aba notas da prova
 #      aba -n [NOME...]  abre aba nova na pasta atual (com nome, se der)
+#      aba -x [ALVO...]  fecha a aba atual, ou as abas ALVO: número da barra ou
+#                        glob no título (entre aspas: aba -x 'teste*' 3)
 #      aba N NOME...     renomeia a aba N (o número que aparece na barra)
 #      aba [N]           volta ao título automático
 #      aba -- NOME...    NOME começa com número (ex.: aba -- 2026 notas)
@@ -13,6 +15,44 @@ if [[ "${1:-}" == -n ]]; then
     shift
     # o kitty não tem "nova aba aqui" curto: launch é genérico e o padrão é split
     exec kitty @ launch --type=tab --cwd="$PWD" ${1:+--tab-title "$*"}
+fi
+
+if [[ "${1:-}" == -x ]]; then
+    shift
+    # Só abas da janela (OS window) onde estou, pra os números baterem com a
+    # barra. A aba atual fecha por último: depois dela o script morre junto.
+    kitty @ ls | python3 -I -c '
+import fnmatch, json, subprocess, sys
+eu, alvos = int(sys.argv[1]), sys.argv[2:]
+for osw in json.load(sys.stdin):
+    abas = osw["tabs"]
+    atual = next((t for t in abas if any(w["id"] == eu for w in t["windows"])), None)
+    if atual:
+        break
+else:
+    sys.exit("aba: não achei a aba atual no kitty @ ls")
+if not alvos:
+    escolhidas = [atual]
+else:
+    escolhidas, erro = [], False
+    for a in alvos:
+        if a.isdigit():
+            achou = [abas[int(a) - 1]] if 1 <= int(a) <= len(abas) else []
+        else:
+            achou = [t for t in abas if fnmatch.fnmatchcase(t["title"], a)]
+        if not achou:
+            print(f"aba: nada bate com {a!r}", file=sys.stderr)
+            erro = True
+        escolhidas += [t for t in achou if t not in escolhidas]
+    if erro and not escolhidas:
+        sys.exit(1)
+escolhidas.sort(key=lambda t: t is atual)
+for t in escolhidas:
+    titulo, tid = t["title"], t["id"]
+    print(f"fechando {abas.index(t) + 1}: {titulo}", flush=True)
+    subprocess.run(["kitty", "@", "close-tab", "--match", f"id:{tid}"], check=True)
+' "$KITTY_WINDOW_ID" "$@"
+    exit
 fi
 
 alvo="window_id:$KITTY_WINDOW_ID"
