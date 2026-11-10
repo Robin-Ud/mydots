@@ -116,5 +116,14 @@ um arquivo meu rodar como root.
 - `touchpad-resume`: recarrega o driver do touchpad (`i2c_hid_acpi`) depois de
   toda suspensão, porque às vezes ele volta travado.
   `sudo install -m755 -o root -g root sistema/touchpad-resume /etc/systemd/system-sleep/`
+- `com.bitwarden.Bitwarden.policy` + `polkit-1`: digital no Bitwarden GUI (flatpak).
+  O app destrava pelo polkit, mas no Flatpak não consegue instalar a policy sozinho;
+  a policy é a que vem embutida no app. O `polkit-1` põe a digital só no PAM do
+  polkit (o `system-auth` continua sem), então **todo** pedido do polkit passa a
+  aceitar o dedo, não só o Bitwarden. Quem mostra o pedido é a noctalia
+  (`polkit_agent = true`).
+  `sudo install -m644 -o root -g root sistema/com.bitwarden.Bitwarden.policy /usr/share/polkit-1/actions/`
+  `sudo install -m644 -o root -g root sistema/polkit-1 /etc/pam.d/`
+  Depois: Bitwarden → Configurações → "Destravar com autenticação do sistema".
 
 Os caminhos absolutos (`/home/rud/...`) são da minha máquina: troque pelos seus.

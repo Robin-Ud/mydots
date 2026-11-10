@@ -1,0 +1,10 @@
+#%PAM-1.0
+# PAM do polkit: vai em /etc/pam.d/polkit-1 (sobrepõe o /usr/lib/pam.d/polkit-1).
+# Digital só aqui, pro Bitwarden GUI destravar com o dedo: o system-auth segue
+# sem digital, então swaylock, sudo e login não mudam. Três tentativas e 15 s;
+# se falhar ou der timeout, cai na senha normal.
+auth       sufficient   pam_fprintd.so max-tries=3 timeout=15
+auth       include      system-auth
+account    include      system-auth
+password   include      system-auth
+session    include      system-auth
